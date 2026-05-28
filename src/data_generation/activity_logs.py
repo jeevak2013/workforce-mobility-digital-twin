@@ -317,7 +317,7 @@ def generate_activity_logs(
     employees_csv: str,
     output_csv: str,
     start_date: str = "2025-01-01",
-    days: int = 30,
+    days: int = 365,
     seed: int = 42,
 ) -> pd.DataFrame:
     """
