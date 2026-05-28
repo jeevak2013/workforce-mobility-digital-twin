@@ -1,0 +1,4 @@
+vehicle_id,vendor_name,vehicle_type,seating_capacity,fuel_type,gps_enabled,panic_button_enabled,safety_rating,active
+FT-SDN-001,FastTrack Mobility,SEDAN,4,DIESEL,True,True,8.8,True
+SR-SUV-101,SecureRide Logistics,SUV,6,DIESEL,True,True,9.5,True
+CC-VAN-220,CityCommute Services,VAN,8,CNG,True,False,8.1,True

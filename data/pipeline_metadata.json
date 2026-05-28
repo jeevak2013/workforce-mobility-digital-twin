@@ -1,0 +1,14 @@
+{
+    "generated_at": "2026-05-28T04:11:13.858750",
+    "seed": 42,
+    "employee_count": 1817,
+    "transport_users": 896,
+    "activity_log_rows": 531866,
+    "fleet_count": 3,
+    "vendor_count": 3,
+    "dispatch_waves": {
+        "NO_TRANSPORT": 269670,
+        "04:30": 180206,
+        "03:30": 81990
+    }
+}
