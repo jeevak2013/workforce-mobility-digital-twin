@@ -391,26 +391,51 @@ def verify_activity_logs() -> bool:
             return False
 
         # -------------------------------------------------
-        # Beyond 06:30 validation
+        # Beyond 06:30 transport-tail validation
         # -------------------------------------------------
 
-        extreme_tail = df[
-            (
-                df[
+        transport_df = df[
+            df[
+                "uses_company_transport"
+            ]
+            == True
+        ]
+
+        transport_logout_times = (
+            pd.to_datetime(
+                transport_df[
                     "actual_logout"
                 ]
-                > "2025-01-01 06:30:00"
+            )
+        )
+
+        extreme_tail = transport_df[
+            (
+                transport_logout_times.dt.time
+                > pd.to_datetime(
+                    "06:30:00"
+                ).time()
             )
         ]
 
+        tail_percentage = (
+            len(extreme_tail)
+            / max(len(transport_df), 1)
+        ) * 100
+
+        print(
+            f"Beyond-06:30 transport tail: "
+            f"{tail_percentage:.2f}%"
+        )
+
         if (
             len(extreme_tail)
-            > len(df) * 0.08
+            > len(transport_df) * 0.08
         ):
 
             record_failure(
                 "Excessive beyond-06:30 "
-                "tail detected."
+                "transport tail detected."
             )
 
             return False
