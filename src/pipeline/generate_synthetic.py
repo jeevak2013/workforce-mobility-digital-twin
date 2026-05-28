@@ -188,24 +188,61 @@ def validate_dataframe(
 def export_dataframe(
     df: pd.DataFrame,
     filename: str,
+    export_parquet: bool = False,
 ) -> None:
     """
-    Enterprise CSV export utility.
+    Enterprise dataframe export utility.
+
+    Supports:
+    - CSV export
+    - Parquet export
     """
 
-    out_path = (
+    # =====================================================
+    # CSV EXPORT
+    # =====================================================
+
+    csv_path = (
         DATA_DIR / filename
     )
 
     df.to_csv(
-        out_path,
+        csv_path,
         index=False,
         encoding="utf-8",
     )
 
     logger.info(
-        f"Exported: {filename}"
+        f"Exported CSV: {filename}"
     )
+
+    # =====================================================
+    # PARQUET EXPORT
+    # =====================================================
+
+    if export_parquet:
+
+        parquet_name = (
+            filename.replace(
+                ".csv",
+                ".parquet",
+            )
+        )
+
+        parquet_path = (
+            DATA_DIR
+            / parquet_name
+        )
+
+        df.to_parquet(
+            parquet_path,
+            index=False,
+        )
+
+        logger.info(
+            f"Exported Parquet: "
+            f"{parquet_name}"
+        )
 
 # =========================================================
 # PIPELINE METADATA
@@ -373,6 +410,12 @@ def main() -> None:
                     DATA_DIR
                     / "activity_logs.csv"
                 )
+            )
+
+            export_dataframe(
+                activity_logs_df,
+                "activity_logs.csv",
+                export_parquet=True,
             )
 
             validate_dataframe(
