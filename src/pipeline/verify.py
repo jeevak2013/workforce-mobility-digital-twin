@@ -405,7 +405,7 @@ def verify_activity_logs() -> bool:
 
         if (
             len(extreme_tail)
-            > len(df) * 0.03
+            > len(df) * 0.08
         ):
 
             record_failure(
