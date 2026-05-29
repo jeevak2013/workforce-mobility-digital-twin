@@ -219,7 +219,9 @@ __marimo__/
 
 data/
 feature_data/
+models/
 *.csv
 *.parquet
 *.json
 *.log
+*.pkl
