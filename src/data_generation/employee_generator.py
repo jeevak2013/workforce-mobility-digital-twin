@@ -29,6 +29,8 @@ from src.config.geography_config import (
     COIMBATORE_HUBS,
     HubLiteral,
     TransportShiftLiteral,
+    LoginShiftLiteral,
+    LOGOUT_TO_LOGIN_MAPPING,
 )
 
 from src.data_generation.geography_generator import (
@@ -561,6 +563,13 @@ def generate_initial_employees(
             )
         )
 
+        login_shift = cast(
+            LoginShiftLiteral,
+            LOGOUT_TO_LOGIN_MAPPING[
+                transport_shift
+            ],
+        )
+
         shift_logout = (
             generate_shift_logout(
                 rng,
@@ -638,6 +647,10 @@ def generate_initial_employees(
 
             transport_shift=(
                 transport_shift
+            ),
+
+            login_shift=(
+                login_shift
             ),
 
             transport_eligibility=(

@@ -702,6 +702,11 @@ class EmployeePool(BaseModel):
                         "NON_TRANSPORT",
                     ),
 
+                    login_shift=row.get(
+                        "login_shift",
+                        "NON_TRANSPORT",
+                    ),
+
                     transport_eligibility=row.get(
                         "transport_eligibility",
                         "FULL_HOME_DROP",
