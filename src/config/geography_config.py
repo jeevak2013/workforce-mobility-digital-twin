@@ -43,6 +43,44 @@ TransportShiftLiteral = Literal[
     "NON_TRANSPORT",
 ]
 
+LoginShiftLiteral = Literal[
+    "18:30",
+    "19:30",
+    "NON_TRANSPORT",
+]
+
+# =========================================================
+# LOGIN ↔ LOGOUT MAPPING
+# =========================================================
+
+LOGIN_TO_LOGOUT_MAPPING: Final[
+    Dict[
+        LoginShiftLiteral,
+        TransportShiftLiteral,
+    ]
+] = {
+
+    "18:30": "03:30",
+
+    "19:30": "04:30",
+
+    "NON_TRANSPORT": "NON_TRANSPORT",
+}
+
+LOGOUT_TO_LOGIN_MAPPING: Final[
+    Dict[
+        TransportShiftLiteral,
+        LoginShiftLiteral,
+    ]
+] = {
+
+    "03:30": "18:30",
+
+    "04:30": "19:30",
+
+    "NON_TRANSPORT": "NON_TRANSPORT",
+}
+
 # =========================================================
 # ENTERPRISE GEO COORDINATE
 # =========================================================

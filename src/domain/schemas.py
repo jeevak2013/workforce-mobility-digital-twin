@@ -361,6 +361,12 @@ class Employee(BaseModel):
         "NON_TRANSPORT",
     ]
 
+    login_shift: Literal[
+        "18:30",
+        "19:30",
+        "NON_TRANSPORT",
+    ]
+
     transport_eligibility: Literal[
         "FULL_HOME_DROP",
         "CONDITIONAL_APPROVAL",

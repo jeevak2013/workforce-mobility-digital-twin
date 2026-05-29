@@ -123,10 +123,6 @@ def create_temporal_features(
         df["date"]
     )
 
-    df["actual_logout"] = pd.to_datetime(
-        df["actual_logout"]
-    )
-
     # -----------------------------------------------------
     # Calendar Features
     # -----------------------------------------------------
@@ -134,11 +130,6 @@ def create_temporal_features(
     df["day_of_week"] = (
         df["date"]
         .dt.dayofweek
-    )
-
-    df["day_name"] = (
-        df["date"]
-        .dt.day_name()
     )
 
     df["month"] = (
@@ -173,27 +164,6 @@ def create_temporal_features(
         df["date"]
         .dt.is_month_end
     ).astype(int)
-
-    # -----------------------------------------------------
-    # Time Intelligence
-    # -----------------------------------------------------
-
-    df["logout_hour"] = (
-        df["actual_logout"]
-        .dt.hour
-    )
-
-    df["logout_minute"] = (
-        df["actual_logout"]
-        .dt.minute
-    )
-
-    df["minutes_since_midnight"] = (
-        (
-            df["logout_hour"] * 60
-        )
-        + df["logout_minute"]
-    )
 
     return df
 
@@ -350,318 +320,27 @@ def create_geospatial_features(
     ).astype(int)
 
     # -----------------------------------------------------
-    # Hub Density Features
+    # Static Hub Operational Weight
     # -----------------------------------------------------
 
-    hub_density = (
-        df.groupby("hub")
-        ["employee_id"]
-        .transform("count")
+    hub_operational_weight = {
+
+        "Saravanampatti": 5,
+
+        "Singanallur": 4,
+
+        "Thudiyalur": 3,
+
+        "Hopes": 2,
+
+        "Ganapathy": 1,
+    }
+
+    df["hub_operational_weight"] = (
+        df["hub"]
+        .map(hub_operational_weight)
+        .astype(int)
     )
-
-    df["hub_density"] = (
-        hub_density
-    )
-
-    return df
-
-# =========================================================
-# TRANSPORT LOAD FEATURES
-# =========================================================
-
-
-def create_transport_load_features(
-    df: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Enterprise dispatch-load intelligence.
-    """
-
-    logger.info(
-        "Creating transport load features..."
-    )
-
-    # -----------------------------------------------------
-    # Daily Transport Demand
-    # -----------------------------------------------------
-
-    daily_transport_load = (
-        df.groupby(
-            [
-                "date",
-                "transport_shift",
-            ]
-        )
-        ["employee_id"]
-        .transform("count")
-    )
-
-    df["daily_transport_load"] = (
-        daily_transport_load
-    )
-
-    # -----------------------------------------------------
-    # Hub + Shift Load
-    # -----------------------------------------------------
-
-    hub_shift_load = (
-        df.groupby(
-            [
-                "date",
-                "hub",
-                "transport_shift",
-            ]
-        )
-        ["employee_id"]
-        .transform("count")
-    )
-
-    df["hub_shift_load"] = (
-        hub_shift_load
-    )
-
-    return df
-
-# =========================================================
-# FORECASTING INTELLIGENCE FEATURES
-# =========================================================
-
-def create_forecasting_features(
-    df: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Enterprise forecasting intelligence layer.
-
-    Adds:
-    - lag features
-    - rolling averages
-    - growth trends
-    - historical operational persistence
-    """
-
-    logger.info(
-        "Creating forecasting intelligence features..."
-    )
-
-    # -----------------------------------------------------
-    # SORTING
-    # -----------------------------------------------------
-
-    df = df.sort_values(
-        by=[
-            "date",
-            "transport_shift",
-            "hub",
-        ]
-    )
-
-    # -----------------------------------------------------
-    # LAG FEATURES
-    # -----------------------------------------------------
-
-    logger.info(
-        "Creating lag features..."
-    )
-
-    group_cols = [
-        "transport_shift",
-        "hub",
-    ]
-
-    # Previous day transport load
-    df["prev_day_transport_load"] = (
-        df.groupby(group_cols)[
-            "daily_transport_load"
-        ]
-        .shift(1)
-    )
-
-    # Previous week same corridor load
-    df["prev_week_transport_load"] = (
-        df.groupby(group_cols)[
-            "daily_transport_load"
-        ]
-        .shift(7)
-    )
-
-    # Previous hub shift load
-    df["prev_hub_shift_load"] = (
-        df.groupby(group_cols)[
-            "hub_shift_load"
-        ]
-        .shift(1)
-    )
-
-    # -----------------------------------------------------
-    # ROLLING FEATURES
-    # -----------------------------------------------------
-
-    logger.info(
-        "Creating rolling window features..."
-    )
-
-    df["rolling_7d_avg_load"] = (
-        df.groupby(group_cols)[
-            "daily_transport_load"
-        ]
-        .transform(
-            lambda x:
-            x.rolling(
-                window=7,
-                min_periods=1,
-            ).mean()
-        )
-    )
-
-    df["rolling_14d_avg_load"] = (
-        df.groupby(group_cols)[
-            "daily_transport_load"
-        ]
-        .transform(
-            lambda x:
-            x.rolling(
-                window=14,
-                min_periods=1,
-            ).mean()
-        )
-    )
-
-    df["rolling_30d_avg_load"] = (
-        df.groupby(group_cols)[
-            "daily_transport_load"
-        ]
-        .transform(
-            lambda x:
-            x.rolling(
-                window=30,
-                min_periods=1,
-            ).mean()
-        )
-    )
-
-    # -----------------------------------------------------
-    # TREND FEATURES
-    # -----------------------------------------------------
-
-    logger.info(
-        "Creating trend intelligence..."
-    )
-
-    df["load_growth_rate"] = (
-        (
-            df["daily_transport_load"]
-            - df[
-                "prev_day_transport_load"
-            ]
-        )
-        / (
-            df[
-                "prev_day_transport_load"
-            ]
-            + 1
-        )
-    )
-
-    df["hub_load_growth_rate"] = (
-        (
-            df["hub_shift_load"]
-            - df[
-                "prev_hub_shift_load"
-            ]
-        )
-        / (
-            df[
-                "prev_hub_shift_load"
-            ]
-            + 1
-        )
-    )
-
-    # -----------------------------------------------------
-    # HISTORICAL OPERATIONAL FEATURES
-    # -----------------------------------------------------
-
-    logger.info(
-        "Creating operational persistence features..."
-    )
-
-    # Historical vendor delay persistence
-    df["rolling_vendor_delay_rate"] = (
-        df.groupby(group_cols)[
-            "vendor_delay_flag"
-        ]
-        .transform(
-            lambda x:
-            x.rolling(
-                window=7,
-                min_periods=1,
-            ).mean()
-        )
-    )
-
-    # Historical heavy rain persistence
-    df["rolling_rain_rate"] = (
-        df.groupby(group_cols)[
-            "heavy_rain_flag"
-        ]
-        .transform(
-            lambda x:
-            x.rolling(
-                window=7,
-                min_periods=1,
-            ).mean()
-        )
-    )
-
-    # Historical overtime persistence
-    df["rolling_extension_rate"] = (
-        df.groupby(group_cols)[
-            "extension_flag"
-        ]
-        .transform(
-            lambda x:
-            x.rolling(
-                window=7,
-                min_periods=1,
-            ).mean()
-        )
-    )
-
-    # -----------------------------------------------------
-    # NULL HANDLING
-    # -----------------------------------------------------
-
-    forecasting_cols = [
-
-        "prev_day_transport_load",
-
-        "prev_week_transport_load",
-
-        "prev_hub_shift_load",
-
-        "rolling_7d_avg_load",
-
-        "rolling_14d_avg_load",
-
-        "rolling_30d_avg_load",
-
-        "load_growth_rate",
-
-        "hub_load_growth_rate",
-
-        "rolling_vendor_delay_rate",
-
-        "rolling_rain_rate",
-
-        "rolling_extension_rate",
-    ]
-
-    for col in forecasting_cols:
-
-        df[col] = (
-            df[col]
-            .fillna(0)
-        )
 
     return df
 
@@ -764,10 +443,6 @@ def build_transport_feature_store(
     df = create_operational_features(df)
 
     df = create_geospatial_features(df)
-
-    df = create_transport_load_features(df)
-
-    df = create_forecasting_features(df)
 
     # -----------------------------------------------------
     # CLEANUP
