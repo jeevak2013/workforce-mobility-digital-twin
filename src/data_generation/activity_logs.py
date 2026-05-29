@@ -352,6 +352,8 @@ def generate_activity_logs(
 
         "shift_logout",
 
+        "login_shift",
+
         "home_distance_km",
     ]
 
@@ -555,6 +557,10 @@ def generate_activity_logs(
                     ]
                 ),
 
+                "login_shift": row[
+                    "login_shift"
+                ],
+
                 "attendance_status": (
                     attendance_status
                 ),
@@ -654,6 +660,16 @@ def generate_activity_logs(
 
     print(
         "\nDispatch wave distribution:"
+    )
+
+    print(
+        "\nLogin shift distribution:"
+    )
+
+    print(
+        logs_df[
+            "login_shift"
+        ].value_counts()
     )
 
     print(
