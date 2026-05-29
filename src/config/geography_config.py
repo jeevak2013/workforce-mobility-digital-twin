@@ -53,12 +53,7 @@ LoginShiftLiteral = Literal[
 # LOGIN ↔ LOGOUT MAPPING
 # =========================================================
 
-LOGIN_TO_LOGOUT_MAPPING: Final[
-    Dict[
-        LoginShiftLiteral,
-        TransportShiftLiteral,
-    ]
-] = {
+LOGIN_TO_LOGOUT_MAPPING: Final = {
 
     "18:30": "03:30",
 
@@ -67,12 +62,7 @@ LOGIN_TO_LOGOUT_MAPPING: Final[
     "NON_TRANSPORT": "NON_TRANSPORT",
 }
 
-LOGOUT_TO_LOGIN_MAPPING: Final[
-    Dict[
-        TransportShiftLiteral,
-        LoginShiftLiteral,
-    ]
-] = {
+LOGOUT_TO_LOGIN_MAPPING: Final = {
 
     "03:30": "18:30",
 

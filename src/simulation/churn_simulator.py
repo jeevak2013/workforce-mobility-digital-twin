@@ -215,6 +215,11 @@ def reconstruct_employee(
             "NON_TRANSPORT",
         ),
 
+        login_shift=row.get(
+            "login_shift",
+            "NON_TRANSPORT",
+        ),
+
         transport_eligibility=row.get(
             "transport_eligibility",
             "FULL_HOME_DROP",
@@ -316,6 +321,7 @@ def simulate_employee_churn(
         "pickup_hub",
         "uses_company_transport",
         "transport_shift",
+        "login_shift",
         "transport_eligibility",
         "extension_category",
         "home_distance_km",

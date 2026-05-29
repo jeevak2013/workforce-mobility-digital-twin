@@ -186,6 +186,11 @@ def serialize_employee(
         in ["03:30", "04:30"]
     )
 
+    data["is_transport_login_shift"] = (
+        data["login_shift"]
+        in ["18:30", "19:30"]
+    )
+
     data[
         "is_long_distance_employee"
     ] = (
@@ -338,6 +343,8 @@ def validate_serialized_employee(
         "uses_company_transport",
 
         "transport_shift",
+
+        "login_shift",
 
         "transport_eligibility",
 
