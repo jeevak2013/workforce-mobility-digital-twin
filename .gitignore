@@ -219,9 +219,10 @@ __marimo__/
 
 data/
 feature_data/
-models/
 *.csv
 *.parquet
 *.json
 *.log
-*.pkl
+# Ignore all Python pickle files anywhere in the project
+**/*.pkl
+
