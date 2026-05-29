@@ -91,6 +91,15 @@ TRANSPORT_SHIFT_ENCODING = {
     "NON_TRANSPORT": 0,
 }
 
+LOGIN_SHIFT_ENCODING = {
+
+    "NON_TRANSPORT": 0,
+
+    "18:30": 1,
+
+    "19:30": 2,
+}
+
 ROUTE_RISK_ENCODING = {
     "LOW": 1,
     "MEDIUM": 2,
@@ -183,6 +192,14 @@ def create_workforce_features(
         "Creating workforce features..."
     )
 
+    print(
+        "\nColumns available:"
+    )
+
+    print(
+        df.columns.tolist()
+    )
+
     # -----------------------------------------------------
     # Binary Flags
     # -----------------------------------------------------
@@ -224,6 +241,13 @@ def create_workforce_features(
         df["transport_shift"]
         .map(
             TRANSPORT_SHIFT_ENCODING
+        )
+    )
+
+    df["login_shift_encoded"] = (
+        df["login_shift"]
+        .map(
+            LOGIN_SHIFT_ENCODING
         )
     )
 
@@ -456,6 +480,8 @@ def build_transport_feature_store(
     encoded_columns = [
 
         "transport_shift_encoded",
+
+        "login_shift_encoded",
 
         "extension_category_encoded",
 
