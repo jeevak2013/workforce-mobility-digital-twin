@@ -27,34 +27,20 @@ import pandas as pd
 # PATH CONFIGURATION
 # =========================================================
 
-BASE_DIR = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
-)
+BASE_DIR = Path(__file__).resolve().parents[2]
 
-INPUT_DATA_DIR = (
-    BASE_DIR / "data"
-)
+INPUT_DATA_DIR = BASE_DIR / "data"
 
-OUTPUT_FEATURE_DIR = (
-    BASE_DIR / "feature_data"
-)
+OUTPUT_FEATURE_DIR = BASE_DIR / "feature_data"
 
 OUTPUT_FEATURE_DIR.mkdir(
     parents=True,
     exist_ok=True,
 )
 
-FEATURE_OUTPUT = (
-    OUTPUT_FEATURE_DIR
-    / "transport_features.parquet"
-)
+FEATURE_OUTPUT = OUTPUT_FEATURE_DIR / "transport_features.parquet"
 
-LOG_FILE = (
-    OUTPUT_FEATURE_DIR
-    / "feature_store.log"
-)
+LOG_FILE = OUTPUT_FEATURE_DIR / "feature_store.log"
 
 # =========================================================
 # LOGGING
@@ -62,11 +48,7 @@ LOG_FILE = (
 
 logging.basicConfig(
     level=logging.INFO,
-    format=(
-        "%(asctime)s | "
-        "%(levelname)s | "
-        "%(message)s"
-    ),
+    format=("%(asctime)s | %(levelname)s | %(message)s"),
     handlers=[
         logging.FileHandler(
             LOG_FILE,
@@ -92,11 +74,8 @@ TRANSPORT_SHIFT_ENCODING = {
 }
 
 LOGIN_SHIFT_ENCODING = {
-
     "NON_TRANSPORT": 0,
-
     "18:30": 1,
-
     "19:30": 2,
 }
 
@@ -124,57 +103,32 @@ def create_temporal_features(
     Enterprise temporal feature derivation.
     """
 
-    logger.info(
-        "Creating temporal features..."
-    )
+    logger.info("Creating temporal features...")
 
-    df["date"] = pd.to_datetime(
-        df["date"]
-    )
+    df["date"] = pd.to_datetime(df["date"])
 
     # -----------------------------------------------------
     # Calendar Features
     # -----------------------------------------------------
 
-    df["day_of_week"] = (
-        df["date"]
-        .dt.dayofweek
-    )
+    df["day_of_week"] = df["date"].dt.dayofweek
 
-    df["month"] = (
-        df["date"]
-        .dt.month
-    )
+    df["month"] = df["date"].dt.month
 
-    df["week_of_year"] = (
-        df["date"]
-        .dt.isocalendar()
-        .week
-        .astype(int)
-    )
+    df["week_of_year"] = df["date"].dt.isocalendar().week.astype(int)
 
-    df["week_of_month"] = (
-        (
-            df["date"]
-            .dt.day
-            - 1
-        ) // 7
-    ) + 1
+    df["week_of_month"] = ((df["date"].dt.day - 1) // 7) + 1
 
     # -----------------------------------------------------
     # Weekend / Month-End Intelligence
     # -----------------------------------------------------
 
-    df["is_weekend"] = (
-        df["day_of_week"] >= 5
-    ).astype(int)
+    df["is_weekend"] = (df["day_of_week"] >= 5).astype(int)
 
-    df["is_month_end"] = (
-        df["date"]
-        .dt.is_month_end
-    ).astype(int)
+    df["is_month_end"] = (df["date"].dt.is_month_end).astype(int)
 
     return df
+
 
 # =========================================================
 # WORKFORCE FEATURES
@@ -188,77 +142,44 @@ def create_workforce_features(
     Workforce behavioral intelligence.
     """
 
-    logger.info(
-        "Creating workforce features..."
-    )
+    logger.info("Creating workforce features...")
 
-    print(
-        "\nColumns available:"
-    )
+    print("\nColumns available:")
 
-    print(
-        df.columns.tolist()
-    )
+    print(df.columns.tolist())
 
     # -----------------------------------------------------
     # Binary Flags
     # -----------------------------------------------------
 
-    df["is_transport_user"] = (
-        df["uses_company_transport"]
-        .astype(int)
-    )
+    df["is_transport_user"] = df["uses_company_transport"].astype(int)
 
-    df["escort_required"] = (
-        df["requires_security_escort"]
-        .astype(int)
-    )
+    df["escort_required"] = df["requires_security_escort"].astype(int)
 
-    df["is_female"] = (
-        df["gender"]
-        == "Female"
-    ).astype(int)
+    df["is_female"] = (df["gender"] == "Female").astype(int)
 
     # -----------------------------------------------------
     # Extension Intelligence
     # -----------------------------------------------------
 
-    df["extension_flag"] = (
-        df["extension_category"]
-        != "NO_EXTENSION"
-    ).astype(int)
+    df["extension_flag"] = (df["extension_category"] != "NO_EXTENSION").astype(int)
 
     df["high_extension_flag"] = (
-        df["extension_category"]
-        == "EXTEND_BEYOND_0630"
+        df["extension_category"] == "EXTEND_BEYOND_0630"
     ).astype(int)
 
     # -----------------------------------------------------
     # Shift Encoding
     # -----------------------------------------------------
 
-    df["transport_shift_encoded"] = (
-        df["transport_shift"]
-        .map(
-            TRANSPORT_SHIFT_ENCODING
-        )
-    )
+    df["transport_shift_encoded"] = df["transport_shift"].map(TRANSPORT_SHIFT_ENCODING)
 
-    df["login_shift_encoded"] = (
-        df["login_shift"]
-        .map(
-            LOGIN_SHIFT_ENCODING
-        )
-    )
+    df["login_shift_encoded"] = df["login_shift"].map(LOGIN_SHIFT_ENCODING)
 
-    df["extension_category_encoded"] = (
-        df["extension_category"]
-        .map(
-            EXTENSION_ENCODING
-        )
-    )
+    df["extension_category_encoded"] = df["extension_category"].map(EXTENSION_ENCODING)
 
     return df
+
 
 # =========================================================
 # OPERATIONAL FEATURES
@@ -272,46 +193,30 @@ def create_operational_features(
     Operational transport intelligence.
     """
 
-    logger.info(
-        "Creating operational features..."
-    )
+    logger.info("Creating operational features...")
 
     # -----------------------------------------------------
     # Operational Event Flags
     # -----------------------------------------------------
 
-    df["vendor_delay_flag"] = (
-        df["operational_event"]
-        == "VENDOR_DELAY"
-    ).astype(int)
+    df["vendor_delay_flag"] = (df["operational_event"] == "VENDOR_DELAY").astype(int)
 
-    df["heavy_rain_flag"] = (
-        df["operational_event"]
-        == "HEAVY_RAIN"
-    ).astype(int)
+    df["heavy_rain_flag"] = (df["operational_event"] == "HEAVY_RAIN").astype(int)
 
-    df["month_end_surge_flag"] = (
-        df["operational_event"]
-        == "MONTH_END_SURGE"
-    ).astype(int)
+    df["month_end_surge_flag"] = (df["operational_event"] == "MONTH_END_SURGE").astype(
+        int
+    )
 
-    df["system_outage_flag"] = (
-        df["operational_event"]
-        == "SYSTEM_OUTAGE"
-    ).astype(int)
+    df["system_outage_flag"] = (df["operational_event"] == "SYSTEM_OUTAGE").astype(int)
 
     # -----------------------------------------------------
     # Route Risk
     # -----------------------------------------------------
 
-    df["route_risk_encoded"] = (
-        df["route_risk_level"]
-        .map(
-            ROUTE_RISK_ENCODING
-        )
-    )
+    df["route_risk_encoded"] = df["route_risk_level"].map(ROUTE_RISK_ENCODING)
 
     return df
+
 
 # =========================================================
 # GEOSPATIAL FEATURES
@@ -325,134 +230,86 @@ def create_geospatial_features(
     Geospatial mobility intelligence.
     """
 
-    logger.info(
-        "Creating geospatial features..."
-    )
+    logger.info("Creating geospatial features...")
 
     # -----------------------------------------------------
     # Distance Intelligence
     # -----------------------------------------------------
 
-    df["long_distance_flag"] = (
-        df["home_distance_km"]
-        > 18
-    ).astype(int)
+    df["long_distance_flag"] = (df["home_distance_km"] > 18).astype(int)
 
-    df["extreme_distance_flag"] = (
-        df["home_distance_km"]
-        > 25
-    ).astype(int)
+    df["extreme_distance_flag"] = (df["home_distance_km"] > 25).astype(int)
 
     # -----------------------------------------------------
     # Static Hub Operational Weight
     # -----------------------------------------------------
 
     hub_operational_weight = {
-
         "Saravanampatti": 5,
-
         "Singanallur": 4,
-
         "Thudiyalur": 3,
-
         "Hopes": 2,
-
         "Ganapathy": 1,
     }
 
-    df["hub_operational_weight"] = (
-        df["hub"]
-        .map(hub_operational_weight)
-        .astype(int)
-    )
+    df["hub_operational_weight"] = df["hub"].map(hub_operational_weight).astype(int)
 
     return df
+
 
 # =========================================================
 # MAIN FEATURE PIPELINE
 # =========================================================
 
 
-def build_transport_feature_store(
-) -> pd.DataFrame:
+def build_transport_feature_store() -> pd.DataFrame:
     """
     Enterprise transport feature store builder.
     """
 
     logger.info("=" * 60)
 
-    logger.info(
-        "Building enterprise "
-        "transport feature store..."
-    )
+    logger.info("Building enterprise transport feature store...")
 
     # -----------------------------------------------------
     # LOAD DATA
     # -----------------------------------------------------
 
-    activity_logs_path = (
-        INPUT_DATA_DIR
-        / "activity_logs.parquet"
-    )
+    activity_logs_path = INPUT_DATA_DIR / "activity_logs.parquet"
 
-    logger.info(
-        "Loading activity logs..."
-    )
+    logger.info("Loading activity logs...")
 
-    df = pd.read_parquet(
-        activity_logs_path
-    )
+    df = pd.read_parquet(activity_logs_path)
 
     # -----------------------------------------------------
     # LOAD EMPLOYEE MASTER DATA
     # -----------------------------------------------------
 
-    employees_path = (
-        INPUT_DATA_DIR
-        / "employees_after_churn.csv"
-    )
+    employees_path = INPUT_DATA_DIR / "employees_after_churn.csv"
 
-    logger.info(
-        "Loading employee master data..."
-    )
+    logger.info("Loading employee master data...")
 
-    employees_df = pd.read_csv(
-        employees_path
-    )
+    employees_df = pd.read_csv(employees_path)
 
     # -----------------------------------------------------
     # ENTERPRISE DATA ENRICHMENT
     # -----------------------------------------------------
 
-    logger.info(
-        "Merging workforce attributes..."
-    )
+    logger.info("Merging workforce attributes...")
 
     employee_columns = [
-
         "employee_id",
-
         "gender",
-
         "hub",
-
         "pickup_hub",
-
         "safety_priority_score",
-
         "home_lat",
-
         "home_lon",
     ]
 
     df = df.merge(
-
-        employees_df[
-            employee_columns
-        ],
-
+        employees_df[employee_columns],
         on="employee_id",
-
         how="left",
     )
 
@@ -472,37 +329,24 @@ def build_transport_feature_store(
     # CLEANUP
     # -----------------------------------------------------
 
-    logger.info(
-        "Optimizing dataframe..."
-    )
+    logger.info("Optimizing dataframe...")
 
     # Fill missing encoded values safely
     encoded_columns = [
-
         "transport_shift_encoded",
-
         "login_shift_encoded",
-
         "extension_category_encoded",
-
         "route_risk_encoded",
     ]
 
     for col in encoded_columns:
-
-        df[col] = (
-            df[col]
-            .fillna(0)
-            .astype(int)
-        )
+        df[col] = df[col].fillna(0).astype(int)
 
     # -----------------------------------------------------
     # EXPORT
     # -----------------------------------------------------
 
-    logger.info(
-        "Exporting feature store..."
-    )
+    logger.info("Exporting feature store...")
 
     df.to_parquet(
         FEATURE_OUTPUT,
@@ -513,26 +357,20 @@ def build_transport_feature_store(
         FEATURE_OUTPUT.with_suffix(".csv"),
         index=False,
         encoding="utf-8",
-    )    
-
-    logger.info(
-        f"Feature store exported: "
-        f"{FEATURE_OUTPUT.name}"
     )
 
-    logger.info(
-        f"Total engineered features: "
-        f"{len(df.columns)}"
-    )
+    logger.info(f"Feature store exported: {FEATURE_OUTPUT.name}")
+
+    logger.info(f"Total engineered features: {len(df.columns)}")
 
     logger.info("=" * 60)
 
     return df
+
 
 # =========================================================
 # ENTRYPOINT
 # =========================================================
 
 if __name__ == "__main__":
-
     build_transport_feature_store()

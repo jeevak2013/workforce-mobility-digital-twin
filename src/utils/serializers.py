@@ -67,55 +67,33 @@ def serialize_employee(
 
     home = data.pop("home")
 
-    data["home_lat"] = (
-        home["latitude"]
-    )
+    data["home_lat"] = home["latitude"]
 
-    data["home_lon"] = (
-        home["longitude"]
-    )
+    data["home_lon"] = home["longitude"]
 
     # =====================================================
     # TEMPORAL NORMALIZATION
     # =====================================================
 
-    data["shift_logout"] = (
-        serialize_datetime(
-            data.get(
-                "shift_logout"
-            )
-        )
-    )
+    data["shift_logout"] = serialize_datetime(data.get("shift_logout"))
 
-    if (
-        "effective_logout_time"
-        in data
-    ):
-
-        data[
-            "effective_logout_time"
-        ] = serialize_datetime(
-            data.get(
-                "effective_logout_time"
-            )
+    if "effective_logout_time" in data:
+        data["effective_logout_time"] = serialize_datetime(
+            data.get("effective_logout_time")
         )
 
     # =====================================================
     # BOOLEAN NORMALIZATION
     # =====================================================
 
-    data[
-        "uses_company_transport"
-    ] = bool(
+    data["uses_company_transport"] = bool(
         data.get(
             "uses_company_transport",
             False,
         )
     )
 
-    data[
-        "requires_security_escort"
-    ] = bool(
+    data["requires_security_escort"] = bool(
         data.get(
             "requires_security_escort",
             False,
@@ -126,9 +104,7 @@ def serialize_employee(
     # NUMERIC NORMALIZATION
     # =====================================================
 
-    data[
-        "home_distance_km"
-    ] = round(
+    data["home_distance_km"] = round(
         float(
             data.get(
                 "home_distance_km",
@@ -138,9 +114,7 @@ def serialize_employee(
         2,
     )
 
-    data[
-        "safety_priority_score"
-    ] = round(
+    data["safety_priority_score"] = round(
         float(
             data.get(
                 "safety_priority_score",
@@ -150,9 +124,7 @@ def serialize_employee(
         2,
     )
 
-    data[
-        "predicted_extension_minutes"
-    ] = int(
+    data["predicted_extension_minutes"] = int(
         data.get(
             "predicted_extension_minutes",
             0,
@@ -169,67 +141,27 @@ def serialize_employee(
     # ENTERPRISE DERIVED ANALYTICS
     # =====================================================
 
-    data[
-        "is_transport_user"
-    ] = (
-        data[
-            "uses_company_transport"
-        ]
+    data["is_transport_user"] = data["uses_company_transport"]
+
+    data["is_night_shift"] = data["transport_shift"] in ["03:30", "04:30"]
+
+    data["is_transport_login_shift"] = data["login_shift"] in ["18:30", "19:30"]
+
+    data["is_long_distance_employee"] = data["home_distance_km"] > 25
+
+    data["requires_special_approval"] = (
+        data["transport_eligibility"] == "CONDITIONAL_APPROVAL"
     )
 
-    data[
-        "is_night_shift"
-    ] = (
-        data[
-            "transport_shift"
-        ]
-        in ["03:30", "04:30"]
-    )
-
-    data["is_transport_login_shift"] = (
-        data["login_shift"]
-        in ["18:30", "19:30"]
-    )
-
-    data[
-        "is_long_distance_employee"
-    ] = (
-        data[
-            "home_distance_km"
-        ]
-        > 25
-    )
-
-    data[
-        "requires_special_approval"
-    ] = (
-        data[
-            "transport_eligibility"
-        ]
-        == "CONDITIONAL_APPROVAL"
-    )
-
-    data[
-        "is_high_risk_route"
-    ] = (
-        data[
-            "requires_security_escort"
-        ]
-        or data[
-            "home_distance_km"
-        ]
-        > 25
+    data["is_high_risk_route"] = (
+        data["requires_security_escort"] or data["home_distance_km"] > 25
     )
 
     # =====================================================
     # WORKFORCE FATIGUE ANALYTICS
     # =====================================================
 
-    data[
-        "fatigue_risk_score"
-    ] = compute_fatigue_score(
-        data
-    )
+    data["fatigue_risk_score"] = compute_fatigue_score(data)
 
     return data
 
@@ -248,40 +180,16 @@ def compute_fatigue_score(
 
     score = 1.0
 
-    if (
-        data[
-            "extension_category"
-        ]
-        == "EXTEND_TO_0430"
-    ):
-
+    if data["extension_category"] == "EXTEND_TO_0430":
         score += 2.0
 
-    elif (
-        data[
-            "extension_category"
-        ]
-        == "EXTEND_BEYOND_0630"
-    ):
-
+    elif data["extension_category"] == "EXTEND_BEYOND_0630":
         score += 4.0
 
-    if (
-        data[
-            "home_distance_km"
-        ]
-        > 25
-    ):
-
+    if data["home_distance_km"] > 25:
         score += 2.5
 
-    if (
-        data[
-            "transport_shift"
-        ]
-        == "03:30"
-    ):
-
+    if data["transport_shift"] == "03:30":
         score += 1.5
 
     return round(
@@ -304,12 +212,10 @@ def serialize_employee_batch(
     """
 
     return [
-
         serialize_employee(
             employee=employee,
             status=status,
         )
-
         for employee in employees
     ]
 
@@ -327,47 +233,24 @@ def validate_serialized_employee(
     """
 
     required_fields = [
-
         "employee_id",
-
         "gender",
-
         "home_lat",
-
         "home_lon",
-
         "hub",
-
         "pickup_hub",
-
         "uses_company_transport",
-
         "transport_shift",
-
         "login_shift",
-
         "transport_eligibility",
-
         "extension_category",
-
         "home_distance_km",
     ]
 
-    missing = [
-
-        field
-
-        for field in required_fields
-
-        if field not in data
-    ]
+    missing = [field for field in required_fields if field not in data]
 
     if missing:
-
-        raise ValueError(
-            f"Serialized employee missing fields: "
-            f"{missing}"
-        )
+        raise ValueError(f"Serialized employee missing fields: {missing}")
 
 
 # =========================================================
@@ -375,7 +258,4 @@ def validate_serialized_employee(
 # =========================================================
 
 if __name__ == "__main__":
-
-    print(
-        "\nEnterprise serializer ready."
-    )
+    print("\nEnterprise serializer ready.")

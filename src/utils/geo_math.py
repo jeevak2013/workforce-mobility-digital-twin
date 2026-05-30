@@ -44,13 +44,9 @@ def haversine_distance(
         Distance in kilometers.
     """
 
-    dlat = math.radians(
-        lat2 - lat1
-    )
+    dlat = math.radians(lat2 - lat1)
 
-    dlon = math.radians(
-        lon2 - lon1
-    )
+    dlon = math.radians(lon2 - lon1)
 
     a = (
         math.sin(dlat / 2) ** 2
@@ -76,9 +72,7 @@ def haversine_distance(
 
 
 def build_distance_matrix_km(
-    coordinates: List[
-        Tuple[float, float]
-    ],
+    coordinates: List[Tuple[float, float]],
 ) -> List[List[float]]:
     """
     Builds enterprise distance matrix.
@@ -95,13 +89,11 @@ def build_distance_matrix_km(
     matrix = []
 
     for i in range(n):
-
         row = []
 
         lat1, lon1 = coordinates[i]
 
         for j in range(n):
-
             lat2, lon2 = coordinates[j]
 
             dist = haversine_distance(
@@ -187,9 +179,7 @@ def compute_transport_eligibility(
 
 
 def cluster_compactness_score(
-    coordinates: List[
-        Tuple[float, float]
-    ],
+    coordinates: List[Tuple[float, float]],
 ) -> float:
     """
     Computes average intra-cluster distance.
@@ -208,19 +198,15 @@ def cluster_compactness_score(
     pair_count = 0
 
     for i in range(len(coordinates)):
-
         for j in range(
             i + 1,
             len(coordinates),
         ):
-
-            total_distance += (
-                haversine_distance(
-                    coordinates[i][0],
-                    coordinates[i][1],
-                    coordinates[j][0],
-                    coordinates[j][1],
-                )
+            total_distance += haversine_distance(
+                coordinates[i][0],
+                coordinates[i][1],
+                coordinates[j][0],
+                coordinates[j][1],
             )
 
             pair_count += 1
@@ -255,10 +241,7 @@ def employee_density_per_sq_km(
     if radius_km <= 0:
         return 0.0
 
-    area = (
-        math.pi
-        * (radius_km ** 2)
-    )
+    area = math.pi * (radius_km**2)
 
     return round(
         employee_count / area,
@@ -286,8 +269,7 @@ def estimate_travel_time_minutes(
         return 0.0
 
     return round(
-        (distance_km / avg_speed_kmph)
-        * 60,
+        (distance_km / avg_speed_kmph) * 60,
         1,
     )
 
@@ -306,10 +288,7 @@ def feasible_pooling_distance(
     can realistically share a cab.
     """
 
-    return (
-        max_employee_separation_km
-        <= threshold_km
-    )
+    return max_employee_separation_km <= threshold_km
 
 
 # =========================================================
@@ -371,8 +350,7 @@ def route_efficiency_score(
         return 0.0
 
     return round(
-        total_route_distance_km
-        / employee_count,
+        total_route_distance_km / employee_count,
         2,
     )
 
@@ -393,14 +371,10 @@ def detour_percentage(
     if direct_distance_km <= 0:
         return 0.0
 
-    extra = (
-        actual_route_distance_km
-        - direct_distance_km
-    )
+    extra = actual_route_distance_km - direct_distance_km
 
     return round(
-        (extra / direct_distance_km)
-        * 100,
+        (extra / direct_distance_km) * 100,
         2,
     )
 
@@ -427,8 +401,7 @@ def hub_load_score(
         return 0.0
 
     return round(
-        employee_count
-        / optimal_capacity,
+        employee_count / optimal_capacity,
         2,
     )
 
@@ -466,9 +439,7 @@ def within_geofence(
 
 
 def operational_scatter_score(
-    coordinates: List[
-        Tuple[float, float]
-    ],
+    coordinates: List[Tuple[float, float]],
 ) -> float:
     """
     Measures geographic spread.
@@ -482,20 +453,13 @@ def operational_scatter_score(
     if len(coordinates) <= 1:
         return 0.0
 
-    center_lat = sum(
-        c[0]
-        for c in coordinates
-    ) / len(coordinates)
+    center_lat = sum(c[0] for c in coordinates) / len(coordinates)
 
-    center_lon = sum(
-        c[1]
-        for c in coordinates
-    ) / len(coordinates)
+    center_lon = sum(c[1] for c in coordinates) / len(coordinates)
 
     distances = []
 
     for lat, lon in coordinates:
-
         distances.append(
             haversine_distance(
                 lat,
@@ -506,8 +470,7 @@ def operational_scatter_score(
         )
 
     return round(
-        sum(distances)
-        / len(distances),
+        sum(distances) / len(distances),
         3,
     )
 
@@ -517,7 +480,6 @@ def operational_scatter_score(
 # =========================================================
 
 if __name__ == "__main__":
-
     dist = haversine_distance(
         11.0168,
         76.9558,
@@ -525,12 +487,6 @@ if __name__ == "__main__":
         76.9650,
     )
 
-    print(
-        f"Distance: {dist} km"
-    )
+    print(f"Distance: {dist} km")
 
-    print(
-        compute_transport_eligibility(
-            dist
-        )
-    )
+    print(compute_transport_eligibility(dist))

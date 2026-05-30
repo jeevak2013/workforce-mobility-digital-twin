@@ -24,26 +24,13 @@ from sklearn.metrics import (
 # PATHS
 # ============================================================
 
-BASE_DIR = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
-)
+BASE_DIR = Path(__file__).resolve().parents[2]
 
-DATA_DIR = (
-    BASE_DIR
-    / "data"
-)
+DATA_DIR = BASE_DIR / "data"
 
-OUTPUT_DIR = (
-    BASE_DIR
-    / "cluster_output"
-)
+OUTPUT_DIR = BASE_DIR / "cluster_output"
 
-MODEL_DIR = (
-    BASE_DIR
-    / "models"
-)
+MODEL_DIR = BASE_DIR / "models"
 
 OUTPUT_DIR.mkdir(
     parents=True,
@@ -61,31 +48,19 @@ MODEL_DIR.mkdir(
 
 logging.basicConfig(
     level=logging.INFO,
-    format=(
-        "%(asctime)s | "
-        "%(levelname)s | "
-        "%(message)s"
-    ),
+    format=("%(asctime)s | %(levelname)s | %(message)s"),
 )
 
-logger = logging.getLogger(
-    __name__
-)
+logger = logging.getLogger(__name__)
 
-EMPLOYEE_FILE = (
-    DATA_DIR
-    / "employees_after_churn.csv"
-)
+EMPLOYEE_FILE = DATA_DIR / "employees_after_churn.csv"
+
 
 def load_employee_data() -> pd.DataFrame:
 
-    logger.info(
-        "Loading employees..."
-    )
+    logger.info("Loading employees...")
 
-    df = pd.read_csv(
-        EMPLOYEE_FILE
-    )
+    df = pd.read_csv(EMPLOYEE_FILE)
 
     logger.info(
         "Rows loaded: %s",
@@ -94,28 +69,16 @@ def load_employee_data() -> pd.DataFrame:
 
     return df
 
+
 def filter_transport_users(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
 
-    logger.info(
-        "Filtering transport users..."
-    )
+    logger.info("Filtering transport users...")
 
     df = df[
-        (
-            df[
-                "uses_company_transport"
-            ]
-            == True
-        )
-        &
-        (
-            df[
-                "transport_shift"
-            ]
-            != "NON_TRANSPORT"
-        )
+        (df["uses_company_transport"] == True)
+        & (df["transport_shift"] != "NON_TRANSPORT")
     ].copy()
 
     logger.info(
@@ -125,13 +88,12 @@ def filter_transport_users(
 
     return df
 
+
 def prepare_clustering_dataset(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
 
-    logger.info(
-        "Preparing clustering dataset..."
-    )
+    logger.info("Preparing clustering dataset...")
 
     cluster_df = df[
         [
@@ -150,9 +112,11 @@ def prepare_clustering_dataset(
 
     return cluster_df
 
+
 # ============================================================
 # CLUSTERING BENCHMARK
 # ============================================================
+
 
 def create_feature_matrix(
     df: pd.DataFrame,
@@ -165,53 +129,38 @@ def create_feature_matrix(
         ]
     ].values
 
+
 def evaluate_clustering(
     X: np.ndarray,
     labels: np.ndarray,
 ) -> dict:
 
-    unique_clusters = (
-        len(
-            set(labels)
-        )
-    )
+    unique_clusters = len(set(labels))
 
     if unique_clusters <= 1:
-
         return {
-
             "silhouette": -1,
-
             "davies_bouldin": np.inf,
-
             "calinski_harabasz": 0,
-
             "cluster_count": unique_clusters,
         }
 
     return {
-
-        "silhouette":
-        silhouette_score(
+        "silhouette": silhouette_score(
             X,
             labels,
         ),
-
-        "davies_bouldin":
-        davies_bouldin_score(
+        "davies_bouldin": davies_bouldin_score(
             X,
             labels,
         ),
-
-        "calinski_harabasz":
-        calinski_harabasz_score(
+        "calinski_harabasz": calinski_harabasz_score(
             X,
             labels,
         ),
-
-        "cluster_count":
-        unique_clusters,
+        "cluster_count": unique_clusters,
     }
+
 
 def benchmark_kmeans(
     X: np.ndarray,
@@ -226,61 +175,38 @@ def benchmark_kmeans(
     best_labels = None
 
     for k in range(2, 15):
-
         model = KMeans(
             n_clusters=k,
             random_state=42,
             n_init=10,
         )
 
-        labels = model.fit_predict(
-            X
+        labels = model.fit_predict(X)
+
+        metrics = evaluate_clustering(
+            X,
+            labels,
         )
 
-        metrics = (
-            evaluate_clustering(
-                X,
-                labels,
-            )
-        )
-
-        metrics["model"] = (
-            "KMeans"
-        )
+        metrics["model"] = "KMeans"
 
         metrics["k"] = k
 
-        results.append(
-            metrics
-        )
+        results.append(metrics)
 
-        if (
-            metrics[
-                "silhouette"
-            ]
-            > best_score
-        ):
-
-            best_score = (
-                metrics[
-                    "silhouette"
-                ]
-            )
+        if metrics["silhouette"] > best_score:
+            best_score = metrics["silhouette"]
 
             best_model = model
 
             best_labels = labels
 
     return (
-
-        pd.DataFrame(
-            results
-        ),
-
+        pd.DataFrame(results),
         best_model,
-
         best_labels,
     )
+
 
 def benchmark_minibatch_kmeans(
     X: np.ndarray,
@@ -295,7 +221,6 @@ def benchmark_minibatch_kmeans(
     best_labels = None
 
     for k in range(2, 15):
-
         model = MiniBatchKMeans(
             n_clusters=k,
             random_state=42,
@@ -303,52 +228,32 @@ def benchmark_minibatch_kmeans(
             n_init=10,
         )
 
-        labels = model.fit_predict(
-            X
-        )
+        labels = model.fit_predict(X)
 
         metrics = evaluate_clustering(
             X,
             labels,
         )
 
-        metrics["model"] = (
-            "MiniBatchKMeans"
-        )
+        metrics["model"] = "MiniBatchKMeans"
 
         metrics["k"] = k
 
-        results.append(
-            metrics
-        )
-    
-        if (
-            metrics[
-                "silhouette"
-            ]
-            > best_score
-        ):
+        results.append(metrics)
 
-            best_score = (
-                metrics[
-                    "silhouette"
-                ]
-            )
+        if metrics["silhouette"] > best_score:
+            best_score = metrics["silhouette"]
 
             best_model = model
 
             best_labels = labels
 
     return (
-
-        pd.DataFrame(
-            results
-        ),
-
+        pd.DataFrame(results),
         best_model,
-
         best_labels,
     )
+
 
 def benchmark_agglomerative(
     X: np.ndarray,
@@ -363,61 +268,34 @@ def benchmark_agglomerative(
     best_labels = None
 
     for k in range(2, 15):
+        model = AgglomerativeClustering(n_clusters=k)
 
-        model = (
-            AgglomerativeClustering(
-                n_clusters=k
-            )
+        labels = model.fit_predict(X)
+
+        metrics = evaluate_clustering(
+            X,
+            labels,
         )
 
-        labels = (
-            model.fit_predict(X)
-        )
-
-        metrics = (
-            evaluate_clustering(
-                X,
-                labels,
-            )
-        )
-
-        metrics["model"] = (
-            "Agglomerative"
-        )
+        metrics["model"] = "Agglomerative"
 
         metrics["k"] = k
 
-        results.append(
-            metrics
-        )
+        results.append(metrics)
 
-        if (
-            metrics[
-                "silhouette"
-            ]
-            > best_score
-        ):
-
-            best_score = (
-                metrics[
-                    "silhouette"
-                ]
-            )
+        if metrics["silhouette"] > best_score:
+            best_score = metrics["silhouette"]
 
             best_model = model
 
             best_labels = labels
 
     return (
-
-        pd.DataFrame(
-            results
-        ),
-
+        pd.DataFrame(results),
         best_model,
-
         best_labels,
     )
+
 
 def benchmark_dbscan(
     X: np.ndarray,
@@ -438,57 +316,33 @@ def benchmark_dbscan(
         0.01,
         0.015,
     ]:
-
         model = DBSCAN(
             eps=eps,
             min_samples=5,
         )
 
-        labels = (
-            model.fit_predict(X)
+        labels = model.fit_predict(X)
+
+        metrics = evaluate_clustering(
+            X,
+            labels,
         )
 
-        metrics = (
-            evaluate_clustering(
-                X,
-                labels,
-            )
-        )
-
-        metrics["model"] = (
-            "DBSCAN"
-        )
+        metrics["model"] = "DBSCAN"
 
         metrics["eps"] = eps
 
-        results.append(
-            metrics
-        )
+        results.append(metrics)
 
-        if (
-            metrics[
-                "silhouette"
-            ]
-            > best_score
-        ):
-
-            best_score = (
-                metrics[
-                    "silhouette"
-                ]
-            )
+        if metrics["silhouette"] > best_score:
+            best_score = metrics["silhouette"]
 
             best_labels = labels
 
             best_eps = eps
 
     return (
-
-        pd.DataFrame(
-            results
-        ),
-
+        pd.DataFrame(results),
         best_eps,
-
         best_labels,
     )

@@ -66,16 +66,9 @@ from src.config.geography_config import (
 # 📁 PATH CONFIGURATION
 # =========================================================
 
-BASE_DIR = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
-)
+BASE_DIR = Path(__file__).resolve().parents[2]
 
-DATA_DIR = (
-    BASE_DIR
-    / "synthetic_data"
-)
+DATA_DIR = BASE_DIR / "synthetic_data"
 
 DATA_DIR.mkdir(
     parents=True,
@@ -88,11 +81,7 @@ DATA_DIR.mkdir(
 
 logging.basicConfig(
     level=logging.INFO,
-    format=(
-        "%(asctime)s | "
-        "%(levelname)s | "
-        "%(message)s"
-    ),
+    format=("%(asctime)s | %(levelname)s | %(message)s"),
 )
 
 logger = logging.getLogger(__name__)
@@ -109,26 +98,22 @@ CONDITIONAL_APPROVAL_RADIUS_KM = 25.0
 # 📥 LOAD EMPLOYEE DATA
 # =========================================================
 
+
 def load_employee_data() -> pd.DataFrame:
 
-    logger.info(
-        "Loading employee master dataset..."
-    )
+    logger.info("Loading employee master dataset...")
 
-    employee_df = pd.read_csv(
-        DATA_DIR / "employees.csv"
-    )
+    employee_df = pd.read_csv(DATA_DIR / "employees.csv")
 
-    logger.info(
-        f"Loaded employees: "
-        f"{len(employee_df)}"
-    )
+    logger.info(f"Loaded employees: {len(employee_df)}")
 
     return employee_df
+
 
 # =========================================================
 # 🚕 FILTER TRANSPORT USERS
 # =========================================================
+
 
 def filter_transport_users(
     employee_df: pd.DataFrame,
@@ -137,26 +122,19 @@ def filter_transport_users(
     Filters only company cab users.
     """
 
-    logger.info(
-        "Filtering company transport users..."
-    )
+    logger.info("Filtering company transport users...")
 
-    transport_df = employee_df[
-        employee_df[
-            "uses_company_transport"
-        ] == 1
-    ].copy()
+    transport_df = employee_df[employee_df["uses_company_transport"] == 1].copy()
 
-    logger.info(
-        f"Cab users: "
-        f"{len(transport_df)}"
-    )
+    logger.info(f"Cab users: {len(transport_df)}")
 
     return transport_df
+
 
 # =========================================================
 # 🌍 BUILD HUB KDTREE
 # =========================================================
+
 
 def build_hub_kdtree():
     """
@@ -164,9 +142,7 @@ def build_hub_kdtree():
     for fast nearest-hub lookup.
     """
 
-    logger.info(
-        "Building pickup hub KDTree..."
-    )
+    logger.info("Building pickup hub KDTree...")
 
     hub_names: List[str] = []
 
@@ -179,31 +155,20 @@ def build_hub_kdtree():
             lon,
         ),
     ) in COIMBATORE_HUBS.items():
-
         x, y = to_local_projected_xy(
             lat,
             lon,
         )
 
-        hub_names.append(
-            hub_name
-        )
+        hub_names.append(hub_name)
 
-        hub_xy.append(
-            [x, y]
-        )
+        hub_xy.append([x, y])
 
-    hub_xy = np.array(
-        hub_xy
-    )
+    hub_xy = np.array(hub_xy)
 
-    tree = KDTree(
-        hub_xy
-    )
+    tree = KDTree(hub_xy)
 
-    logger.info(
-        "KDTree initialized successfully."
-    )
+    logger.info("KDTree initialized successfully.")
 
     return (
         tree,
@@ -211,9 +176,11 @@ def build_hub_kdtree():
         hub_xy,
     )
 
+
 # =========================================================
 # 📍 KDTree HUB ALLOCATION
 # =========================================================
+
 
 def allocate_pickup_hubs(
     transport_df: pd.DataFrame,
@@ -223,9 +190,7 @@ def allocate_pickup_hubs(
     using vectorized KDTree search.
     """
 
-    logger.info(
-        "Allocating pickup hubs..."
-    )
+    logger.info("Allocating pickup hubs...")
 
     (
         tree,
@@ -240,19 +205,14 @@ def allocate_pickup_hubs(
     projected_points = []
 
     for _, row in transport_df.iterrows():
-
         x, y = to_local_projected_xy(
             row["home_lat"],
             row["home_lon"],
         )
 
-        projected_points.append(
-            [x, y]
-        )
+        projected_points.append([x, y])
 
-    projected_points = np.array(
-        projected_points
-    )
+    projected_points = np.array(projected_points)
 
     # -----------------------------------------------------
     # Vectorized nearest-neighbor search
@@ -267,32 +227,20 @@ def allocate_pickup_hubs(
     # Assign hubs
     # -----------------------------------------------------
 
-    transport_df[
-        "pickup_hub"
-    ] = [
-
-        hub_names[idx[0]]
-
-        for idx in indices
-    ]
+    transport_df["pickup_hub"] = [hub_names[idx[0]] for idx in indices]
 
     # KDTree distance in meters
-    transport_df[
-        "pickup_distance_km"
-    ] = (
-        distances.flatten()
-        / 1000.0
-    ).round(2)
+    transport_df["pickup_distance_km"] = (distances.flatten() / 1000.0).round(2)
 
-    logger.info(
-        "Pickup hub allocation completed."
-    )
+    logger.info("Pickup hub allocation completed.")
 
     return transport_df
+
 
 # =========================================================
 # 🏠 DROP ELIGIBILITY ENGINE
 # =========================================================
+
 
 def assign_drop_eligibility(
     transport_df: pd.DataFrame,
@@ -302,21 +250,16 @@ def assign_drop_eligibility(
     eligibility tiers.
     """
 
-    logger.info(
-        "Assigning drop eligibility tiers..."
-    )
+    logger.info("Assigning drop eligibility tiers...")
 
     drop_distances = []
 
     eligibility_labels = []
 
     for _, row in transport_df.iterrows():
-
         distance_from_bpo = haversine_distance(
-
             BPO.lat,
             BPO.lon,
-
             row["home_lat"],
             row["home_lon"],
         )
@@ -332,51 +275,34 @@ def assign_drop_eligibility(
         # Tier 1
         # -------------------------------------------------
 
-        if (
-            distance_from_bpo
-            <= FULL_HOME_DROP_RADIUS_KM
-        ):
-
-            eligibility_labels.append(
-                "FULL_HOME_DROP"
-            )
+        if distance_from_bpo <= FULL_HOME_DROP_RADIUS_KM:
+            eligibility_labels.append("FULL_HOME_DROP")
 
         # -------------------------------------------------
         # Tier 2
         # -------------------------------------------------
 
-        elif (
-            distance_from_bpo
-            <= CONDITIONAL_APPROVAL_RADIUS_KM
-        ):
-
-            eligibility_labels.append(
-                "CONDITIONAL_APPROVAL"
-            )
+        elif distance_from_bpo <= CONDITIONAL_APPROVAL_RADIUS_KM:
+            eligibility_labels.append("CONDITIONAL_APPROVAL")
 
         # -------------------------------------------------
         # Tier 3
         # -------------------------------------------------
 
         else:
+            eligibility_labels.append("HUB_DROP_ONLY")
 
-            eligibility_labels.append(
-                "HUB_DROP_ONLY"
-            )
+    transport_df["distance_from_bpo_km"] = drop_distances
 
-    transport_df[
-        "distance_from_bpo_km"
-    ] = drop_distances
-
-    transport_df[
-        "transport_eligibility"
-    ] = eligibility_labels
+    transport_df["transport_eligibility"] = eligibility_labels
 
     return transport_df
+
 
 # =========================================================
 # 📊 PICKUP HUB SUMMARY
 # =========================================================
+
 
 def generate_hub_summary(
     transport_df: pd.DataFrame,
@@ -385,59 +311,37 @@ def generate_hub_summary(
     Generates operational hub KPIs.
     """
 
-    logger.info(
-        "Generating pickup hub summary..."
-    )
+    logger.info("Generating pickup hub summary...")
 
     summary_df = (
-
-        transport_df
-
-        .groupby("pickup_hub")
-
-        .agg({
-
-            "employee_id":
-                "count",
-
-            "pickup_distance_km":
-                "mean",
-
-            "requires_security_escort":
-                "sum",
-        })
-
+        transport_df.groupby("pickup_hub")
+        .agg(
+            {
+                "employee_id": "count",
+                "pickup_distance_km": "mean",
+                "requires_security_escort": "sum",
+            }
+        )
         .reset_index()
     )
 
     summary_df = summary_df.rename(
         columns={
-
-            "employee_id":
-                "employee_count",
-
-            "pickup_distance_km":
-                "avg_pickup_distance_km",
-
-            "requires_security_escort":
-                "escort_required_count",
+            "employee_id": "employee_count",
+            "pickup_distance_km": "avg_pickup_distance_km",
+            "requires_security_escort": "escort_required_count",
         }
     )
 
-    summary_df[
-        "avg_pickup_distance_km"
-    ] = (
-        summary_df[
-            "avg_pickup_distance_km"
-        ]
-        .round(2)
-    )
+    summary_df["avg_pickup_distance_km"] = summary_df["avg_pickup_distance_km"].round(2)
 
     return summary_df
+
 
 # =========================================================
 # 📊 DROP ELIGIBILITY SUMMARY
 # =========================================================
+
 
 def generate_drop_summary(
     transport_df: pd.DataFrame,
@@ -446,55 +350,37 @@ def generate_drop_summary(
     Generates drop eligibility metrics.
     """
 
-    logger.info(
-        "Generating drop eligibility summary..."
-    )
+    logger.info("Generating drop eligibility summary...")
 
     summary_df = (
-
-        transport_df
-
-        .groupby(
-            "transport_eligibility"
+        transport_df.groupby("transport_eligibility")
+        .agg(
+            {
+                "employee_id": "count",
+                "distance_from_bpo_km": "mean",
+            }
         )
-
-        .agg({
-
-            "employee_id":
-                "count",
-
-            "distance_from_bpo_km":
-                "mean",
-        })
-
         .reset_index()
     )
 
     summary_df = summary_df.rename(
         columns={
-
-            "employee_id":
-                "employee_count",
-
-            "distance_from_bpo_km":
-                "avg_distance_from_bpo_km",
+            "employee_id": "employee_count",
+            "distance_from_bpo_km": "avg_distance_from_bpo_km",
         }
     )
 
-    summary_df[
+    summary_df["avg_distance_from_bpo_km"] = summary_df[
         "avg_distance_from_bpo_km"
-    ] = (
-        summary_df[
-            "avg_distance_from_bpo_km"
-        ]
-        .round(2)
-    )
+    ].round(2)
 
     return summary_df
+
 
 # =========================================================
 # 📈 EXPORT VISUALIZATION
 # =========================================================
+
 
 def export_visualization(
     hub_summary_df: pd.DataFrame,
@@ -503,43 +389,32 @@ def export_visualization(
     Exports pickup hub distribution chart.
     """
 
-    logger.info(
-        "Exporting pickup visualization..."
-    )
+    logger.info("Exporting pickup visualization...")
 
-    plt.figure(
-        figsize=(10, 6)
-    )
+    plt.figure(figsize=(10, 6))
 
     plt.bar(
         hub_summary_df["pickup_hub"],
         hub_summary_df["employee_count"],
     )
 
-    plt.xlabel(
-        "Pickup Hub"
-    )
+    plt.xlabel("Pickup Hub")
 
-    plt.ylabel(
-        "Employee Count"
-    )
+    plt.ylabel("Employee Count")
 
-    plt.title(
-        "Enterprise Pickup Hub Distribution"
-    )
+    plt.title("Enterprise Pickup Hub Distribution")
 
     plt.tight_layout()
 
-    plt.savefig(
-        DATA_DIR
-        / "pickup_hub_distribution.png"
-    )
+    plt.savefig(DATA_DIR / "pickup_hub_distribution.png")
 
     plt.close()
+
 
 # =========================================================
 # 📤 EXPORT OUTPUTS
 # =========================================================
+
 
 def export_outputs(
     transport_df: pd.DataFrame,
@@ -550,44 +425,36 @@ def export_outputs(
     Exports enterprise allocation outputs.
     """
 
-    logger.info(
-        "Exporting allocation outputs..."
-    )
+    logger.info("Exporting allocation outputs...")
 
     transport_df.to_csv(
-        DATA_DIR
-        / "pickup_allocations.csv",
+        DATA_DIR / "pickup_allocations.csv",
         index=False,
     )
 
     hub_summary_df.to_csv(
-        DATA_DIR
-        / "pickup_hub_summary.csv",
+        DATA_DIR / "pickup_hub_summary.csv",
         index=False,
     )
 
     drop_summary_df.to_csv(
-        DATA_DIR
-        / "drop_eligibility_summary.csv",
+        DATA_DIR / "drop_eligibility_summary.csv",
         index=False,
     )
 
-    logger.info(
-        "Allocation outputs exported."
-    )
+    logger.info("Allocation outputs exported.")
+
 
 # =========================================================
 # 🚀 MAIN PIPELINE
 # =========================================================
 
+
 def main():
 
     logger.info("=" * 60)
 
-    logger.info(
-        "Starting enterprise pickup "
-        "hub allocation engine..."
-    )
+    logger.info("Starting enterprise pickup hub allocation engine...")
 
     # -----------------------------------------------------
     # Load employee data
@@ -599,45 +466,33 @@ def main():
     # Filter cab users
     # -----------------------------------------------------
 
-    transport_df = filter_transport_users(
-        employee_df
-    )
+    transport_df = filter_transport_users(employee_df)
 
     # -----------------------------------------------------
     # Allocate pickup hubs
     # -----------------------------------------------------
 
-    transport_df = allocate_pickup_hubs(
-        transport_df
-    )
+    transport_df = allocate_pickup_hubs(transport_df)
 
     # -----------------------------------------------------
     # Assign drop eligibility
     # -----------------------------------------------------
 
-    transport_df = assign_drop_eligibility(
-        transport_df
-    )
+    transport_df = assign_drop_eligibility(transport_df)
 
     # -----------------------------------------------------
     # Generate summaries
     # -----------------------------------------------------
 
-    hub_summary_df = generate_hub_summary(
-        transport_df
-    )
+    hub_summary_df = generate_hub_summary(transport_df)
 
-    drop_summary_df = generate_drop_summary(
-        transport_df
-    )
+    drop_summary_df = generate_drop_summary(transport_df)
 
     # -----------------------------------------------------
     # Export visualization
     # -----------------------------------------------------
 
-    export_visualization(
-        hub_summary_df
-    )
+    export_visualization(hub_summary_df)
 
     # -----------------------------------------------------
     # Export outputs
@@ -649,20 +504,14 @@ def main():
         drop_summary_df,
     )
 
-    logger.info(
-        "Enterprise pickup hub allocator "
-        "completed successfully."
-    )
+    logger.info("Enterprise pickup hub allocator completed successfully.")
 
-    print(
-        "\n🚀 Enterprise pickup allocation "
-        "completed successfully.\n"
-    )
+    print("\n🚀 Enterprise pickup allocation completed successfully.\n")
+
 
 # =========================================================
 # 🚀 ENTRYPOINT
 # =========================================================
 
 if __name__ == "__main__":
-
     main()

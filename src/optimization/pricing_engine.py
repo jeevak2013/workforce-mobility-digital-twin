@@ -145,76 +145,43 @@ VENDOR_REGISTRY: Dict[
     str,
     VendorContract,
 ] = {
-
     "FastTrack Mobility": VendorContract(
         vendor_name="FastTrack Mobility",
-
         base_km_rate=24.0,
-
         night_shift_multiplier=1.18,
-
         escort_charge=350.0,
-
         weekend_multiplier=1.10,
-
         fuel_surge_multiplier=1.05,
-
         dead_km_rate=10.0,
-
         cancellation_penalty=500.0,
-
         safety_compliance_score=9.1,
-
         SLA_score=8.8,
-
         fleet_availability_score=8.5,
     ),
-
     "SecureRide Logistics": VendorContract(
         vendor_name="SecureRide Logistics",
-
         base_km_rate=26.5,
-
         night_shift_multiplier=1.22,
-
         escort_charge=400.0,
-
         weekend_multiplier=1.15,
-
         fuel_surge_multiplier=1.08,
-
         dead_km_rate=12.0,
-
         cancellation_penalty=700.0,
-
         safety_compliance_score=9.5,
-
         SLA_score=9.0,
-
         fleet_availability_score=8.2,
     ),
-
     "CityCommute Services": VendorContract(
         vendor_name="CityCommute Services",
-
         base_km_rate=22.0,
-
         night_shift_multiplier=1.12,
-
         escort_charge=300.0,
-
         weekend_multiplier=1.08,
-
         fuel_surge_multiplier=1.04,
-
         dead_km_rate=9.0,
-
         cancellation_penalty=450.0,
-
         safety_compliance_score=8.3,
-
         SLA_score=8.1,
-
         fleet_availability_score=8.8,
     ),
 }
@@ -223,169 +190,95 @@ VENDOR_REGISTRY: Dict[
 # ENTERPRISE FLEET REGISTRY
 # =========================================================
 
-FLEET_REGISTRY: List[
-    FleetVehicle
-] = [
-
+FLEET_REGISTRY: List[FleetVehicle] = [
     FleetVehicle(
         vehicle_id="FT-SUV",
-
         vendor_name="FastTrack Mobility",
-
         vehicle_type="SUV",
-
         seating_capacity=6,
-
         fuel_type="CNG",
-
         gps_enabled=True,
-
         panic_button_enabled=True,
-
         safety_rating=8.8,
     ),
-
     FleetVehicle(
         vehicle_id="FT-TT",
-
         vendor_name="FastTrack Mobility",
-
         vehicle_type="TEMPO_TRAVELLER",
-
         seating_capacity=14,
-
         fuel_type="DIESEL",
-
         gps_enabled=True,
-
         panic_button_enabled=True,
-
         safety_rating=8.8,
     ),
-
     FleetVehicle(
         vehicle_id="FT-MAZ",
-
         vendor_name="FastTrack Mobility",
-
         vehicle_type="MAZDA",
-
         seating_capacity=20,
-
         fuel_type="DIESEL",
-
         gps_enabled=True,
-
         panic_button_enabled=True,
-
         safety_rating=8.8,
     ),
-
     FleetVehicle(
         vehicle_id="SR-SUV",
-
         vendor_name="SecureRide Logistics",
-
         vehicle_type="SUV",
-
         seating_capacity=6,
-
         fuel_type="CNG",
-
         gps_enabled=True,
-
         panic_button_enabled=True,
-
         safety_rating=9.5,
     ),
-
     FleetVehicle(
         vehicle_id="SR-TT",
-
         vendor_name="SecureRide Logistics",
-
         vehicle_type="TEMPO_TRAVELLER",
-
         seating_capacity=14,
-
         fuel_type="DIESEL",
-
         gps_enabled=True,
-
         panic_button_enabled=True,
-
         safety_rating=9.5,
     ),
-
     FleetVehicle(
         vehicle_id="SR-MAZ",
-
         vendor_name="SecureRide Logistics",
-
         vehicle_type="MAZDA",
-
         seating_capacity=20,
-
         fuel_type="DIESEL",
-
         gps_enabled=True,
-
         panic_button_enabled=True,
-
         safety_rating=9.5,
     ),
-
     FleetVehicle(
         vehicle_id="CC-SUV",
-
         vendor_name="CityCommute Services",
-
         vehicle_type="SUV",
-
         seating_capacity=6,
-
         fuel_type="CNG",
-
         gps_enabled=True,
-
         panic_button_enabled=False,
-
         safety_rating=8.1,
     ),
-
     FleetVehicle(
         vehicle_id="CC-TT",
-
         vendor_name="CityCommute Services",
-
         vehicle_type="TEMPO_TRAVELLER",
-
         seating_capacity=14,
-
         fuel_type="DIESEL",
-
         gps_enabled=True,
-
         panic_button_enabled=False,
-
         safety_rating=8.1,
     ),
-
     FleetVehicle(
         vehicle_id="CC-MAZ",
-
         vendor_name="CityCommute Services",
-
         vehicle_type="MAZDA",
-
         seating_capacity=20,
-
         fuel_type="DIESEL",
-
         gps_enabled=True,
-
         panic_button_enabled=False,
-
         safety_rating=8.1,
     ),
 ]
@@ -424,15 +317,10 @@ def hub_cost_multiplier(
     """
 
     multipliers = {
-
         "Saravanampatti": 1.00,
-
         "Singanallur": 1.05,
-
         "Thudiyalur": 1.08,
-
         "Hopes": 1.03,
-
         "Ganapathy": 1.06,
     }
 
@@ -459,8 +347,7 @@ def utilization_score(
         return 0.0
 
     return round(
-        employee_count
-        / vehicle_capacity,
+        employee_count / vehicle_capacity,
         2,
     )
 
@@ -486,71 +373,42 @@ def compute_route_trip_cost(
     Enterprise route-level pricing engine.
     """
 
-    vendor = VENDOR_REGISTRY[
-        vendor_name
-    ]
+    vendor = VENDOR_REGISTRY[vendor_name]
 
     # =====================================================
     # BASE DISTANCE COST
     # =====================================================
 
-    total_km = (
-        route_distance_km
-        + dead_km
-    )
+    total_km = route_distance_km + dead_km
 
-    base_cost = (
-        total_km
-        * vendor.base_km_rate
-    )
+    base_cost = total_km * vendor.base_km_rate
 
     # =====================================================
     # SHIFT-WAVE SURGE
     # =====================================================
 
-    base_cost *= (
-        shift_wave_multiplier(
-            shift_wave
-        )
-    )
+    base_cost *= shift_wave_multiplier(shift_wave)
 
     # =====================================================
     # HUB MULTIPLIER
     # =====================================================
 
-    base_cost *= (
-        hub_cost_multiplier(
-            hub_name
-        )
-    )
+    base_cost *= hub_cost_multiplier(hub_name)
 
     # =====================================================
     # WEEKEND SURGE
     # =====================================================
 
     if weekend_trip:
-
-        base_cost *= (
-            vendor.weekend_multiplier
-        )
+        base_cost *= vendor.weekend_multiplier
 
     # =====================================================
     # FUEL INFLATION
     # =====================================================
 
-    fuel_adjustment = (
-        base_cost
-        * (
-            vendor.fuel_surge_multiplier
-            - 1
-        )
-        * fuel_price_index
-    )
+    fuel_adjustment = base_cost * (vendor.fuel_surge_multiplier - 1) * fuel_price_index
 
-    total_cost = (
-        base_cost
-        + fuel_adjustment
-    )
+    total_cost = base_cost + fuel_adjustment
 
     # =====================================================
     # ESCORT PREMIUM
@@ -559,83 +417,61 @@ def compute_route_trip_cost(
     safety_premium = 0.0
 
     if escort_required:
+        safety_premium = vendor.escort_charge
 
-        safety_premium = (
-            vendor.escort_charge
-        )
-
-        total_cost += (
-            safety_premium
-        )
+        total_cost += safety_premium
 
     # =====================================================
     # DEAD KM COST
     # =====================================================
 
-    total_cost += (
-        dead_km
-        * vendor.dead_km_rate
-    )
+    total_cost += dead_km * vendor.dead_km_rate
 
     # =====================================================
     # UTILIZATION ANALYTICS
     # =====================================================
 
-    utilization = (
-        utilization_score(
-            employee_count,
-            vehicle_capacity,
-        )
+    utilization = utilization_score(
+        employee_count,
+        vehicle_capacity,
     )
 
     # Underutilized routes are expensive
     if utilization < 0.50:
-
         total_cost *= 1.15
 
     # =====================================================
     # COST PER EMPLOYEE
     # =====================================================
 
-    cost_per_employee = (
-        total_cost
-        / max(employee_count, 1)
-    )
+    cost_per_employee = total_cost / max(employee_count, 1)
 
     return RouteCostResult(
-
         total_cost=round(
             total_cost,
             2,
         ),
-
         cost_per_employee=round(
             cost_per_employee,
             2,
         ),
-
         route_km=round(
             route_distance_km,
             2,
         ),
-
         dead_km=round(
             dead_km,
             2,
         ),
-
         fuel_adjustment=round(
             fuel_adjustment,
             2,
         ),
-
         safety_premium=round(
             safety_premium,
             2,
         ),
-
         utilization_score=utilization,
-
         vendor_name=vendor_name,
     )
 
@@ -660,50 +496,24 @@ def select_optimal_vendor(
 
     lowest_cost = float("inf")
 
-    for vendor_name in (
-        VENDOR_REGISTRY.keys()
-    ):
-
-        result = (
-            compute_route_trip_cost(
-                vendor_name=vendor_name,
-
-                route_distance_km=(
-                    route_distance_km
-                ),
-
-                dead_km=5.0,
-
-                employee_count=(
-                    employee_count
-                ),
-
-                shift_wave=shift_wave,
-
-                hub_name=hub_name,
-
-                escort_required=(
-                    escort_required
-                ),
-            )
+    for vendor_name in VENDOR_REGISTRY.keys():
+        result = compute_route_trip_cost(
+            vendor_name=vendor_name,
+            route_distance_km=(route_distance_km),
+            dead_km=5.0,
+            employee_count=(employee_count),
+            shift_wave=shift_wave,
+            hub_name=hub_name,
+            escort_required=(escort_required),
         )
 
-        if (
-            result.total_cost
-            < lowest_cost
-        ):
-
-            lowest_cost = (
-                result.total_cost
-            )
+        if result.total_cost < lowest_cost:
+            lowest_cost = result.total_cost
 
             best_result = result
 
     if best_result is None:
-
-        raise ValueError(
-            "No vendor pricing result generated."
-        )
+        raise ValueError("No vendor pricing result generated.")
 
     return best_result
 
@@ -713,18 +523,12 @@ def select_optimal_vendor(
 # =========================================================
 
 
-def fleet_registry_dataframe(
-) -> pd.DataFrame:
+def fleet_registry_dataframe() -> pd.DataFrame:
     """
     Fleet analytics export.
     """
 
-    return pd.DataFrame([
-
-        vars(vehicle)
-
-        for vehicle in FLEET_REGISTRY
-    ])
+    return pd.DataFrame([vars(vehicle) for vehicle in FLEET_REGISTRY])
 
 
 # =========================================================
@@ -732,20 +536,12 @@ def fleet_registry_dataframe(
 # =========================================================
 
 
-def vendor_registry_dataframe(
-) -> pd.DataFrame:
+def vendor_registry_dataframe() -> pd.DataFrame:
     """
     Vendor analytics export.
     """
 
-    return pd.DataFrame([
-
-        vars(vendor)
-
-        for vendor in (
-            VENDOR_REGISTRY.values()
-        )
-    ])
+    return pd.DataFrame([vars(vendor) for vendor in (VENDOR_REGISTRY.values())])
 
 
 # =========================================================
@@ -753,15 +549,12 @@ def vendor_registry_dataframe(
 # =========================================================
 
 if __name__ == "__main__":
-
-    fleet_registry_dataframe(   
-    ).to_csv(
+    fleet_registry_dataframe().to_csv(
         "fleet_registry.csv",
         index=False,
     )
 
-    vendor_registry_dataframe(   
-    ).to_csv(
+    vendor_registry_dataframe().to_csv(
         "vendor_registry.csv",
         index=False,
     )

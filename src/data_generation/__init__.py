@@ -5,4 +5,3 @@ relative import syntax (e.g. ``from .geography import CENTER``).  No runtime
 behaviour is required – the file exists solely to make the directory a Python
 package.
 """
-

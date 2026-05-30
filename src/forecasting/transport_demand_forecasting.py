@@ -53,26 +53,13 @@ from lightgbm import (
 # PATH CONFIGURATION
 # ============================================================
 
-BASE_DIR: Final = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
-)
+BASE_DIR: Final = Path(__file__).resolve().parents[2]
 
-FEATURE_DIR: Final = (
-    BASE_DIR
-    / "feature_data"
-)
+FEATURE_DIR: Final = BASE_DIR / "feature_data"
 
-MODEL_DIR: Final = (
-    BASE_DIR
-    / "models"
-)
+MODEL_DIR: Final = BASE_DIR / "models"
 
-OUTPUT_DIR: Final = (
-    BASE_DIR
-    / "forecast_output"
-)
+OUTPUT_DIR: Final = BASE_DIR / "forecast_output"
 
 MODEL_DIR.mkdir(
     parents=True,
@@ -84,15 +71,9 @@ OUTPUT_DIR.mkdir(
     exist_ok=True,
 )
 
-FEATURE_STORE: Final = (
-    FEATURE_DIR
-    / "transport_features.parquet"
-)
+FEATURE_STORE: Final = FEATURE_DIR / "transport_features.parquet"
 
-LOG_FILE: Final = (
-    OUTPUT_DIR
-    / "workforce_forecasting.log"
-)
+LOG_FILE: Final = OUTPUT_DIR / "workforce_forecasting.log"
 
 
 # ============================================================
@@ -101,41 +82,28 @@ LOG_FILE: Final = (
 
 logging.basicConfig(
     level=logging.INFO,
-    format=(
-        "%(asctime)s | "
-        "%(levelname)s | "
-        "%(message)s"
-    ),
+    format=("%(asctime)s | %(levelname)s | %(message)s"),
     handlers=[
-        logging.FileHandler(
-            LOG_FILE
-        ),
+        logging.FileHandler(LOG_FILE),
         logging.StreamHandler(),
     ],
 )
 
-logger = logging.getLogger(
-    __name__
-)
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
 # DATA LOADING
 # ============================================================
 
+
 def load_feature_store() -> pd.DataFrame:
 
-    logger.info(
-        "Loading feature store..."
-    )
+    logger.info("Loading feature store...")
 
-    df = pd.read_parquet(
-        FEATURE_STORE
-    )
+    df = pd.read_parquet(FEATURE_STORE)
 
-    df["date"] = pd.to_datetime(
-        df["date"]
-    )
+    df["date"] = pd.to_datetime(df["date"])
 
     logger.info(
         "Rows loaded: %s",
@@ -149,84 +117,69 @@ def load_feature_store() -> pd.DataFrame:
 # LOGIN DEMAND DATASET
 # ============================================================
 
+
 def build_login_dataset(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
 
-    logger.info(
-        "Building login demand dataset..."
-    )
+    logger.info("Building login demand dataset...")
 
-    login_df = (
-        df.groupby(
-            [
-                "date",
-                "hub",
-                "login_shift",
-            ],
-            as_index=False,
-        )
-        .agg(
-            daily_login_demand=(
-                "employee_id",
-                "count",
-            ),
-
-            day_of_week=(
-                "day_of_week",
-                "first",
-            ),
-
-            month=(
-                "month",
-                "first",
-            ),
-
-            week_of_year=(
-                "week_of_year",
-                "first",
-            ),
-
-            week_of_month=(
-                "week_of_month",
-                "first",
-            ),
-
-            is_weekend=(
-                "is_weekend",
-                "first",
-            ),
-
-            is_month_end=(
-                "is_month_end",
-                "first",
-            ),
-
-            vendor_delay_flag=(
-                "vendor_delay_flag",
-                "mean",
-            ),
-
-            heavy_rain_flag=(
-                "heavy_rain_flag",
-                "mean",
-            ),
-
-            month_end_surge_flag=(
-                "month_end_surge_flag",
-                "mean",
-            ),
-
-            system_outage_flag=(
-                "system_outage_flag",
-                "mean",
-            ),
-
-            hub_operational_weight=(
-                "hub_operational_weight",
-                "mean",
-            ),
-        )
+    login_df = df.groupby(
+        [
+            "date",
+            "hub",
+            "login_shift",
+        ],
+        as_index=False,
+    ).agg(
+        daily_login_demand=(
+            "employee_id",
+            "count",
+        ),
+        day_of_week=(
+            "day_of_week",
+            "first",
+        ),
+        month=(
+            "month",
+            "first",
+        ),
+        week_of_year=(
+            "week_of_year",
+            "first",
+        ),
+        week_of_month=(
+            "week_of_month",
+            "first",
+        ),
+        is_weekend=(
+            "is_weekend",
+            "first",
+        ),
+        is_month_end=(
+            "is_month_end",
+            "first",
+        ),
+        vendor_delay_flag=(
+            "vendor_delay_flag",
+            "mean",
+        ),
+        heavy_rain_flag=(
+            "heavy_rain_flag",
+            "mean",
+        ),
+        month_end_surge_flag=(
+            "month_end_surge_flag",
+            "mean",
+        ),
+        system_outage_flag=(
+            "system_outage_flag",
+            "mean",
+        ),
+        hub_operational_weight=(
+            "hub_operational_weight",
+            "mean",
+        ),
     )
 
     logger.info(
@@ -241,84 +194,69 @@ def build_login_dataset(
 # LOGOUT DEMAND DATASET
 # ============================================================
 
+
 def build_logout_dataset(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
 
-    logger.info(
-        "Building logout demand dataset..."
-    )
+    logger.info("Building logout demand dataset...")
 
-    logout_df = (
-        df.groupby(
-            [
-                "date",
-                "hub",
-                "transport_shift",
-            ],
-            as_index=False,
-        )
-        .agg(
-            daily_logout_demand=(
-                "employee_id",
-                "count",
-            ),
-
-            day_of_week=(
-                "day_of_week",
-                "first",
-            ),
-
-            month=(
-                "month",
-                "first",
-            ),
-
-            week_of_year=(
-                "week_of_year",
-                "first",
-            ),
-
-            week_of_month=(
-                "week_of_month",
-                "first",
-            ),
-
-            is_weekend=(
-                "is_weekend",
-                "first",
-            ),
-
-            is_month_end=(
-                "is_month_end",
-                "first",
-            ),
-
-            vendor_delay_flag=(
-                "vendor_delay_flag",
-                "mean",
-            ),
-
-            heavy_rain_flag=(
-                "heavy_rain_flag",
-                "mean",
-            ),
-
-            month_end_surge_flag=(
-                "month_end_surge_flag",
-                "mean",
-            ),
-
-            system_outage_flag=(
-                "system_outage_flag",
-                "mean",
-            ),
-
-            hub_operational_weight=(
-                "hub_operational_weight",
-                "mean",
-            ),
-        )
+    logout_df = df.groupby(
+        [
+            "date",
+            "hub",
+            "transport_shift",
+        ],
+        as_index=False,
+    ).agg(
+        daily_logout_demand=(
+            "employee_id",
+            "count",
+        ),
+        day_of_week=(
+            "day_of_week",
+            "first",
+        ),
+        month=(
+            "month",
+            "first",
+        ),
+        week_of_year=(
+            "week_of_year",
+            "first",
+        ),
+        week_of_month=(
+            "week_of_month",
+            "first",
+        ),
+        is_weekend=(
+            "is_weekend",
+            "first",
+        ),
+        is_month_end=(
+            "is_month_end",
+            "first",
+        ),
+        vendor_delay_flag=(
+            "vendor_delay_flag",
+            "mean",
+        ),
+        heavy_rain_flag=(
+            "heavy_rain_flag",
+            "mean",
+        ),
+        month_end_surge_flag=(
+            "month_end_surge_flag",
+            "mean",
+        ),
+        system_outage_flag=(
+            "system_outage_flag",
+            "mean",
+        ),
+        hub_operational_weight=(
+            "hub_operational_weight",
+            "mean",
+        ),
     )
 
     logger.info(
@@ -328,56 +266,37 @@ def build_logout_dataset(
 
     return logout_df
 
+
 def create_forecast_features(
     df: pd.DataFrame,
     target_column: str,
     grouping_columns: list[str],
 ) -> pd.DataFrame:
 
-    logger.info(
-        "Creating forecasting features..."
-    )
+    logger.info("Creating forecasting features...")
 
-    df = df.sort_values(
-        grouping_columns + ["date"]
-    ).copy()
+    df = df.sort_values(grouping_columns + ["date"]).copy()
 
-    grouped = df.groupby(
-        grouping_columns
-    )
+    grouped = df.groupby(grouping_columns)
 
     # ==========================================
     # LAG FEATURES
     # ==========================================
 
-    df["lag_1"] = (
-        grouped[target_column]
-        .shift(1)
-    )
+    df["lag_1"] = grouped[target_column].shift(1)
 
-    df["lag_7"] = (
-        grouped[target_column]
-        .shift(7)
-    )
+    df["lag_7"] = grouped[target_column].shift(7)
 
-    df["lag_14"] = (
-        grouped[target_column]
-        .shift(14)
-    )
+    df["lag_14"] = grouped[target_column].shift(14)
 
     # ==========================================
     # ROLLING FEATURES
     # ==========================================
 
-    shifted_target = (
-        grouped[target_column]
-        .shift(1)
-    )
+    shifted_target = grouped[target_column].shift(1)
 
-    df["rolling_7d_avg"] = (
-        grouped[target_column]
-        .transform(
-            lambda x:
+    df["rolling_7d_avg"] = grouped[target_column].transform(
+        lambda x: (
             x.shift(1)
             .rolling(
                 window=7,
@@ -387,10 +306,8 @@ def create_forecast_features(
         )
     )
 
-    df["rolling_14d_avg"] = (
-        grouped[target_column]
-        .transform(
-            lambda x:
+    df["rolling_14d_avg"] = grouped[target_column].transform(
+        lambda x: (
             x.shift(1)
             .rolling(
                 window=14,
@@ -404,29 +321,9 @@ def create_forecast_features(
     # TREND FEATURES
     # ==========================================
 
-    df["weekly_growth_rate"] = (
-        (
-            df["lag_1"]
-            - df["lag_7"]
-        )
-        /
-        (
-            df["lag_7"]
-            + 1
-        )
-    )
+    df["weekly_growth_rate"] = (df["lag_1"] - df["lag_7"]) / (df["lag_7"] + 1)
 
-    df["monthly_growth_rate"] = (
-        (
-            df["lag_1"]
-            - df["lag_14"]
-        )
-        /
-        (
-            df["lag_14"]
-            + 1
-        )
-    )
+    df["monthly_growth_rate"] = (df["lag_1"] - df["lag_14"]) / (df["lag_14"] + 1)
 
     # ==========================================
     # CLEANUP
@@ -434,11 +331,10 @@ def create_forecast_features(
 
     df = df.fillna(0)
 
-    logger.info(
-        "Forecast features created."
-    )
+    logger.info("Forecast features created.")
 
     return df
+
 
 def benchmark_models(
     df: pd.DataFrame,
@@ -446,9 +342,7 @@ def benchmark_models(
     categorical_columns: list[str],
 ) -> tuple:
 
-    logger.info(
-        "Starting model benchmarking..."
-    )
+    logger.info("Starting model benchmarking...")
 
     df = df.copy()
 
@@ -468,7 +362,6 @@ def benchmark_models(
     ]
 
     feature_columns = [
-
         col
         for col in df.columns
         if col
@@ -478,30 +371,18 @@ def benchmark_models(
         ]
     ]
 
-    X = df[
-        feature_columns
-    ].astype(
-        np.float32
-    )
+    X = df[feature_columns].astype(np.float32)
 
-    y = df[
-        target_column
-    ]
+    y = df[target_column]
 
     models = {
-
-        "LinearRegression":
-        LinearRegression(),
-
-        "RandomForest":
-        RandomForestRegressor(
+        "LinearRegression": LinearRegression(),
+        "RandomForest": RandomForestRegressor(
             n_estimators=200,
             random_state=42,
             n_jobs=-1,
         ),
-
-        "XGBoost":
-        XGBRegressor(
+        "XGBoost": XGBRegressor(
             n_estimators=200,
             max_depth=6,
             learning_rate=0.05,
@@ -509,9 +390,7 @@ def benchmark_models(
             colsample_bytree=0.8,
             random_state=42,
         ),
-
-        "LightGBM":
-        LGBMRegressor(
+        "LightGBM": LGBMRegressor(
             n_estimators=200,
             learning_rate=0.05,
             random_state=42,
@@ -519,31 +398,20 @@ def benchmark_models(
         ),
     }
 
-    splitter = (
-        TimeSeriesSplit(
-            n_splits=5
-        )
-    )
+    splitter = TimeSeriesSplit(n_splits=5)
 
     metrics = []
 
     best_model = None
 
-    best_rmse = float(
-        "inf"
-    )
+    best_rmse = float("inf")
 
     best_predictions = None
 
     best_actuals = None
 
-    for model_name, model in (
-        models.items()
-    ):
-
-        logger.info(
-            f"Benchmarking: {model_name}"
-        )
+    for model_name, model in models.items():
+        logger.info(f"Benchmarking: {model_name}")
 
         fold_predictions = []
 
@@ -556,45 +424,26 @@ def benchmark_models(
             splitter.split(X),
             start=1,
         ):
+            logger.info(f"{model_name} | Fold {fold}")
 
-            logger.info(
-                f"{model_name} | Fold {fold}"
-            )
+            X_train = X.iloc[train_idx]
 
-            X_train = (
-                X.iloc[train_idx]
-            )
+            X_test = X.iloc[test_idx]
 
-            X_test = (
-                X.iloc[test_idx]
-            )
+            y_train = y.iloc[train_idx]
 
-            y_train = (
-                y.iloc[train_idx]
-            )
-
-            y_test = (
-                y.iloc[test_idx]
-            )
+            y_test = y.iloc[test_idx]
 
             model.fit(
                 X_train,
                 y_train,
             )
 
-            predictions = (
-                model.predict(
-                    X_test
-                )
-            )
+            predictions = model.predict(X_test)
 
-            fold_predictions.extend(
-                predictions
-            )
+            fold_predictions.extend(predictions)
 
-            fold_actuals.extend(
-                y_test
-            )
+            fold_actuals.extend(y_test)
 
         mae = mean_absolute_error(
             fold_actuals,
@@ -613,87 +462,54 @@ def benchmark_models(
             fold_predictions,
         )
 
-        metrics.append({
-
-            "model":
-            model_name,
-
-            "MAE":
-            round(mae, 4),
-
-            "RMSE":
-            round(rmse, 4),
-
-            "R2":
-            round(r2, 4),
-        })
-
-        logger.info(
-            f"{model_name} | "
-            f"MAE={mae:.4f} | "
-            f"RMSE={rmse:.4f} | "
-            f"R2={r2:.4f}"
+        metrics.append(
+            {
+                "model": model_name,
+                "MAE": round(mae, 4),
+                "RMSE": round(rmse, 4),
+                "R2": round(r2, 4),
+            }
         )
 
-        if rmse < best_rmse:
+        logger.info(f"{model_name} | MAE={mae:.4f} | RMSE={rmse:.4f} | R2={r2:.4f}")
 
+        if rmse < best_rmse:
             best_rmse = rmse
 
             best_model = model
 
-            best_predictions = (
-                fold_predictions
-            )
+            best_predictions = fold_predictions
 
-            best_actuals = (
-                fold_actuals
-            )
+            best_actuals = fold_actuals
 
-    metrics_df = (
-        pd.DataFrame(
-            metrics
-        )
-    )
+    metrics_df = pd.DataFrame(metrics)
 
     return (
-
         best_model,
-
         metrics_df,
-
         best_predictions,
-
         best_actuals,
-
         feature_columns,
     )
 
+
 def train_login_forecaster():
 
-    logger.info(
-        "=" * 60
-    )
+    logger.info("=" * 60)
 
-    logger.info(
-        "TRAINING LOGIN FORECASTER"
-    )
+    logger.info("TRAINING LOGIN FORECASTER")
 
     df = load_feature_store()
 
-    login_df = build_login_dataset(
-        df
-    )
+    login_df = build_login_dataset(df)
 
-    login_df = (
-        create_forecast_features(
-            df=login_df,
-            target_column=
-            "daily_login_demand",
-            grouping_columns=[
-                "hub",
-                "login_shift",
-            ],
-        )
+    login_df = create_forecast_features(
+        df=login_df,
+        target_column="daily_login_demand",
+        grouping_columns=[
+            "hub",
+            "login_shift",
+        ],
     )
 
     (
@@ -704,8 +520,7 @@ def train_login_forecaster():
         feature_columns,
     ) = benchmark_models(
         df=login_df,
-        target_column=
-        "daily_login_demand",
+        target_column="daily_login_demand",
         categorical_columns=[
             "hub",
             "login_shift",
@@ -713,14 +528,11 @@ def train_login_forecaster():
     )
 
     metrics_df.to_csv(
-        OUTPUT_DIR
-        / "login_metrics.csv",
+        OUTPUT_DIR / "login_metrics.csv",
         index=False,
     )
 
-    logger.info(
-        "Training final login model..."
-    )
+    logger.info("Training final login model...")
 
     model_df = pd.get_dummies(
         login_df.copy(),
@@ -743,7 +555,6 @@ def train_login_forecaster():
     ]
 
     feature_columns = [
-
         col
         for col in model_df.columns
         if col
@@ -753,13 +564,9 @@ def train_login_forecaster():
         ]
     ]
 
-    X = model_df[
-        feature_columns
-    ]
+    X = model_df[feature_columns]
 
-    y = model_df[
-        "daily_login_demand"
-    ]
+    y = model_df["daily_login_demand"]
 
     best_model.fit(
         X,
@@ -768,36 +575,25 @@ def train_login_forecaster():
 
     joblib.dump(
         best_model,
-        MODEL_DIR
-        / "workforce_login_model.pkl",
+        MODEL_DIR / "workforce_login_model.pkl",
     )
 
     joblib.dump(
         feature_columns,
-        MODEL_DIR
-        / "workforce_login_features.pkl",
+        MODEL_DIR / "workforce_login_features.pkl",
     )
 
-    prediction_df = pd.DataFrame({
-
-        "actual":
-        actuals,
-
-        "predicted":
-        predictions,
-    })
-
-    prediction_df[
-        "error"
-    ] = (
-        prediction_df["actual"]
-        -
-        prediction_df["predicted"]
+    prediction_df = pd.DataFrame(
+        {
+            "actual": actuals,
+            "predicted": predictions,
+        }
     )
+
+    prediction_df["error"] = prediction_df["actual"] - prediction_df["predicted"]
 
     prediction_df.to_parquet(
-        OUTPUT_DIR
-        / "login_forecast.parquet",
+        OUTPUT_DIR / "login_forecast.parquet",
         index=False,
     )
 
@@ -805,58 +601,42 @@ def train_login_forecaster():
         best_model,
         "coef_",
     ):
-
-        importance_df = (
-            pd.DataFrame({
-                "feature":
-                feature_columns,
-
-                "importance":
-                best_model.coef_,
-            })
-            .sort_values(
-                "importance",
-                key=abs,
-                ascending=False,
-            )
+        importance_df = pd.DataFrame(
+            {
+                "feature": feature_columns,
+                "importance": best_model.coef_,
+            }
+        ).sort_values(
+            "importance",
+            key=abs,
+            ascending=False,
         )
 
         importance_df.to_csv(
-            OUTPUT_DIR
-            / "login_feature_importance.csv",
+            OUTPUT_DIR / "login_feature_importance.csv",
             index=False,
         )
 
-    logger.info(
-        "Login forecaster completed."
-    )
+    logger.info("Login forecaster completed.")
+
 
 def train_logout_forecaster():
 
-    logger.info(
-        "=" * 60
-    )
+    logger.info("=" * 60)
 
-    logger.info(
-        "TRAINING LOGOUT FORECASTER"
-    )
+    logger.info("TRAINING LOGOUT FORECASTER")
 
     df = load_feature_store()
 
-    logout_df = build_logout_dataset(
-        df
-    )
+    logout_df = build_logout_dataset(df)
 
-    logout_df = (
-        create_forecast_features(
-            df=logout_df,
-            target_column=
-            "daily_logout_demand",
-            grouping_columns=[
-                "hub",
-                "transport_shift",
-            ],
-        )
+    logout_df = create_forecast_features(
+        df=logout_df,
+        target_column="daily_logout_demand",
+        grouping_columns=[
+            "hub",
+            "transport_shift",
+        ],
     )
 
     (
@@ -867,8 +647,7 @@ def train_logout_forecaster():
         feature_columns,
     ) = benchmark_models(
         df=logout_df,
-        target_column=
-        "daily_logout_demand",
+        target_column="daily_logout_demand",
         categorical_columns=[
             "hub",
             "transport_shift",
@@ -876,8 +655,7 @@ def train_logout_forecaster():
     )
 
     metrics_df.to_csv(
-        OUTPUT_DIR
-        / "logout_metrics.csv",
+        OUTPUT_DIR / "logout_metrics.csv",
         index=False,
     )
 
@@ -902,7 +680,6 @@ def train_logout_forecaster():
     ]
 
     feature_columns = [
-
         col
         for col in model_df.columns
         if col
@@ -912,13 +689,9 @@ def train_logout_forecaster():
         ]
     ]
 
-    X = model_df[
-        feature_columns
-    ]
+    X = model_df[feature_columns]
 
-    y = model_df[
-        "daily_logout_demand"
-    ]
+    y = model_df["daily_logout_demand"]
 
     best_model.fit(
         X,
@@ -927,36 +700,25 @@ def train_logout_forecaster():
 
     joblib.dump(
         best_model,
-        MODEL_DIR
-        / "workforce_logout_model.pkl",
+        MODEL_DIR / "workforce_logout_model.pkl",
     )
 
     joblib.dump(
         feature_columns,
-        MODEL_DIR
-        / "workforce_logout_features.pkl",
+        MODEL_DIR / "workforce_logout_features.pkl",
     )
 
-    prediction_df = pd.DataFrame({
-
-        "actual":
-        actuals,
-
-        "predicted":
-        predictions,
-    })
-
-    prediction_df[
-        "error"
-    ] = (
-        prediction_df["actual"]
-        -
-        prediction_df["predicted"]
+    prediction_df = pd.DataFrame(
+        {
+            "actual": actuals,
+            "predicted": predictions,
+        }
     )
+
+    prediction_df["error"] = prediction_df["actual"] - prediction_df["predicted"]
 
     prediction_df.to_parquet(
-        OUTPUT_DIR
-        / "logout_forecast.parquet",
+        OUTPUT_DIR / "logout_forecast.parquet",
         index=False,
     )
 
@@ -964,53 +726,38 @@ def train_logout_forecaster():
         best_model,
         "coef_",
     ):
-
-        importance_df = (
-            pd.DataFrame({
-                "feature":
-                feature_columns,
-
-                "importance":
-                best_model.coef_,
-            })
-            .sort_values(
-                "importance",
-                key=abs,
-                ascending=False,
-            )
+        importance_df = pd.DataFrame(
+            {
+                "feature": feature_columns,
+                "importance": best_model.coef_,
+            }
+        ).sort_values(
+            "importance",
+            key=abs,
+            ascending=False,
         )
 
         importance_df.to_csv(
-            OUTPUT_DIR
-            / "logout_feature_importance.csv",
+            OUTPUT_DIR / "logout_feature_importance.csv",
             index=False,
         )
 
-    logger.info(
-        "Logout forecaster completed."
-    )
+    logger.info("Logout forecaster completed.")
+
 
 def main():
 
-    logger.info(
-        "=" * 60
-    )
+    logger.info("=" * 60)
 
-    logger.info(
-        "Starting workforce demand forecasting..."
-    )
+    logger.info("Starting workforce demand forecasting...")
 
     train_login_forecaster()
 
     train_logout_forecaster()
 
-    logger.info(
-        "=" * 60
-    )
+    logger.info("=" * 60)
 
-    logger.info(
-        "Workforce forecasting completed."
-    )
+    logger.info("Workforce forecasting completed.")
 
 
 if __name__ == "__main__":

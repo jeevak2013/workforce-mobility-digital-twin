@@ -112,13 +112,9 @@ def haversine_distance_km(
 
     radius = 6371.0
 
-    dlat = math.radians(
-        lat2 - lat1
-    )
+    dlat = math.radians(lat2 - lat1)
 
-    dlon = math.radians(
-        lon2 - lon1
-    )
+    dlon = math.radians(lon2 - lon1)
 
     a = (
         math.sin(dlat / 2) ** 2
@@ -150,21 +146,11 @@ def generate_gender_pool(
     Enterprise workforce gender ratio.
     """
 
-    female_count = int(
-        round(
-            count
-            * BPO.gender_female_target
-        )
-    )
+    female_count = int(round(count * BPO.gender_female_target))
 
-    male_count = (
-        count - female_count
-    )
+    male_count = count - female_count
 
-    pool = (
-        ["Female"] * female_count
-        + ["Male"] * male_count
-    )
+    pool = ["Female"] * female_count + ["Male"] * male_count
 
     return cast(
         List[GenderType],
@@ -187,12 +173,8 @@ def choose_hub(
     return cast(
         HubLiteral,
         rng.choices(
-            population=list(
-                HUB_DISTRIBUTION.keys()
-            ),
-            weights=list(
-                HUB_DISTRIBUTION.values()
-            ),
+            population=list(HUB_DISTRIBUTION.keys()),
+            weights=list(HUB_DISTRIBUTION.values()),
             k=1,
         )[0],
     )
@@ -238,13 +220,9 @@ def generate_shift_logout(
     """
 
     if transport_shift == "NON_TRANSPORT":
-
-        shift = rng.choice(
-            NON_TRANSPORT_SHIFTS
-        )
+        shift = rng.choice(NON_TRANSPORT_SHIFTS)
 
     else:
-
         shift = transport_shift
 
     hour, minute = map(
@@ -279,9 +257,7 @@ def assign_extension_category(
     # -----------------------------------------------------
 
     if transport_shift == "03:30":
-
         if rng.random() < 0.25:
-
             return "EXTEND_TO_0430"
 
     # -----------------------------------------------------
@@ -289,9 +265,7 @@ def assign_extension_category(
     # -----------------------------------------------------
 
     elif transport_shift == "04:30":
-
         if rng.random() < 0.10:
-
             return "EXTEND_BEYOND_0630"
 
     return "NO_EXTENSION"
@@ -310,23 +284,11 @@ def generate_extension_minutes(
     Generates realistic overtime duration.
     """
 
-    if (
-        extension_category
-        == "EXTEND_TO_0430"
-    ):
+    if extension_category == "EXTEND_TO_0430":
+        return rng.choice([30, 60])
 
-        return rng.choice(
-            [30, 60]
-        )
-
-    if (
-        extension_category
-        == "EXTEND_BEYOND_0630"
-    ):
-
-        return rng.choice(
-            [60, 90, 120]
-        )
+    if extension_category == "EXTEND_BEYOND_0630":
+        return rng.choice([60, 90, 120])
 
     return 0
 
@@ -344,11 +306,9 @@ def assign_transport_eligibility(
     """
 
     if distance_km <= 18:
-
         return "FULL_HOME_DROP"
 
     if distance_km <= 25:
-
         return "CONDITIONAL_APPROVAL"
 
     return "HUB_DROP_ONLY"
@@ -370,11 +330,9 @@ def generate_safety_priority(
     score = 1.0
 
     if gender == "Female":
-
         score += 3.0
 
     if shift_logout.hour in [0, 3, 4]:
-
         score += 3.0
 
     return min(score, 10.0)
@@ -393,15 +351,11 @@ def requires_security_escort(
     Enterprise female escort enforcement.
     """
 
-    return (
-        gender == "Female"
-        and shift_logout.hour
-        in [0, 3, 4]
-    )
+    return gender == "Female" and shift_logout.hour in [0, 3, 4]
 
 
 # =========================================================
-# EMPLOYEE SERIALIZER 
+# EMPLOYEE SERIALIZER
 # =========================================================
 
 
@@ -416,13 +370,9 @@ def serialize_employee(
 
     data = employee.model_dump()
 
-    data["home_lat"] = (
-        data["home"]["latitude"]
-    )
+    data["home_lat"] = data["home"]["latitude"]
 
-    data["home_lon"] = (
-        data["home"]["longitude"]
-    )
+    data["home_lon"] = data["home"]["longitude"]
 
     del data["home"]
 
@@ -451,9 +401,7 @@ def generate_initial_employees(
     # Gender distribution
     # -----------------------------------------------------
 
-    genders = generate_gender_pool(
-        total_employees
-    )
+    genders = generate_gender_pool(total_employees)
 
     rng.shuffle(genders)
 
@@ -481,146 +429,108 @@ def generate_initial_employees(
         1,
         total_employees + 1,
     ):
+        gender = genders[employee_id - 1]
 
-        gender = genders[
-            employee_id - 1
-        ]
-
-        uses_company_transport = (
-            employee_id
-            in transport_employee_ids
-        )
+        uses_company_transport = employee_id in transport_employee_ids
 
         # -------------------------------------------------
         # Operational hub assignment
         # -------------------------------------------------
 
-        assigned_hub = choose_hub(
-            rng
-        )
+        assigned_hub = choose_hub(rng)
 
-        hub_config = (
-            COIMBATORE_HUBS[
-                assigned_hub
-            ]
-        )
+        hub_config = COIMBATORE_HUBS[assigned_hub]
 
         # -------------------------------------------------
         # Long-distance outliers
         # -------------------------------------------------
 
         if rng.random() < 0.07:
-
-            max_scatter_km = (
-                rng.uniform(
-                    20,
-                    35,
-                )
+            max_scatter_km = rng.uniform(
+                20,
+                35,
             )
 
         else:
-
-            max_scatter_km = (
-                rng.uniform(
-                    3,
-                    hub_config.operational_radius_km,
-                )
+            max_scatter_km = rng.uniform(
+                3,
+                hub_config.operational_radius_km,
             )
 
         # -------------------------------------------------
         # Employee home generation
         # -------------------------------------------------
 
-        lat, lon = (
-            generate_random_home_drop(
-                hub_center=hub_config,
-                max_scatter_km=max_scatter_km,
-                rng=rng,
-            )
+        lat, lon = generate_random_home_drop(
+            hub_center=hub_config,
+            max_scatter_km=max_scatter_km,
+            rng=rng,
         )
 
         # -------------------------------------------------
         # Distance from BPO
         # -------------------------------------------------
 
-        home_distance_km = (
-            haversine_distance_km(
-                lat,
-                lon,
-                BPO.location.latitude,
-                BPO.location.longitude,
-            )
+        home_distance_km = haversine_distance_km(
+            lat,
+            lon,
+            BPO.location.latitude,
+            BPO.location.longitude,
         )
 
         # -------------------------------------------------
         # Shift-wave assignment
         # -------------------------------------------------
 
-        transport_shift = (
-            assign_transport_shift(
-                rng,
-                uses_company_transport,
-            )
+        transport_shift = assign_transport_shift(
+            rng,
+            uses_company_transport,
         )
 
         login_shift = cast(
             LoginShiftLiteral,
-            LOGOUT_TO_LOGIN_MAPPING[
-                transport_shift
-            ],
+            LOGOUT_TO_LOGIN_MAPPING[transport_shift],
         )
 
-        shift_logout = (
-            generate_shift_logout(
-                rng,
-                transport_shift,
-            )
+        shift_logout = generate_shift_logout(
+            rng,
+            transport_shift,
         )
 
         # -------------------------------------------------
         # Overtime generation
         # -------------------------------------------------
 
-        extension_category = (
-            assign_extension_category(
-                rng,
-                transport_shift,
-            )
+        extension_category = assign_extension_category(
+            rng,
+            transport_shift,
         )
 
-        extension_minutes = (
-            generate_extension_minutes(
-                rng,
-                extension_category,
-            )
+        extension_minutes = generate_extension_minutes(
+            rng,
+            extension_category,
         )
 
         # -------------------------------------------------
         # Transport policy
         # -------------------------------------------------
 
-        transport_eligibility = (
-            assign_transport_eligibility(
-                home_distance_km,
-            )
+        transport_eligibility = assign_transport_eligibility(
+            home_distance_km,
         )
 
         # -------------------------------------------------
         # Safety analytics
         # -------------------------------------------------
 
-        safety_score = (
-            generate_safety_priority(
-                gender,
-                shift_logout,
-            )
+        safety_score = generate_safety_priority(
+            gender,
+            shift_logout,
         )
 
-        escort_flag = (
-            requires_security_escort(
-                gender,
-                shift_logout,
-            )
+        escort_flag = requires_security_escort(
+            gender,
+            shift_logout,
         )
 
         # -------------------------------------------------
@@ -629,66 +539,28 @@ def generate_initial_employees(
 
         employee = Employee(
             employee_id=employee_id,
-
             gender=gender,
-
             home=Coordinate(
                 latitude=lat,
                 longitude=lon,
             ),
-
             hub=assigned_hub,
-
             pickup_hub=assigned_hub,
-
-            uses_company_transport=(
-                uses_company_transport
-            ),
-
-            transport_shift=(
-                transport_shift
-            ),
-
-            login_shift=(
-                login_shift
-            ),
-
-            transport_eligibility=(
-                transport_eligibility
-            ),
-
-            extension_category=(
-                extension_category
-            ),
-
+            uses_company_transport=(uses_company_transport),
+            transport_shift=(transport_shift),
+            login_shift=(login_shift),
+            transport_eligibility=(transport_eligibility),
+            extension_category=(extension_category),
             shift_logout=shift_logout,
-
-            predicted_extension_minutes=(
-                extension_minutes
-            ),
-
-            safety_priority_score=(
-                safety_score
-            ),
-
-            requires_security_escort=(
-                escort_flag
-            ),
-
-            home_distance_km=(
-                home_distance_km
-            ),
+            predicted_extension_minutes=(extension_minutes),
+            safety_priority_score=(safety_score),
+            requires_security_escort=(escort_flag),
+            home_distance_km=(home_distance_km),
         )
 
-        records.append(
-            serialize_employee(
-                employee
-            )
-        )
+        records.append(serialize_employee(employee))
 
-    employees_df = pd.DataFrame(
-        records
-    )
+    employees_df = pd.DataFrame(records)
 
     # =====================================================
     # ENTERPRISE VALIDATION
@@ -708,18 +580,10 @@ def generate_initial_employees(
         "home_distance_km",
     ]
 
-    missing = [
-        c
-        for c in required_columns
-        if c not in employees_df.columns
-    ]
+    missing = [c for c in required_columns if c not in employees_df.columns]
 
     if missing:
-
-        raise ValueError(
-            f"Generated employees "
-            f"missing columns: {missing}"
-        )
+        raise ValueError(f"Generated employees missing columns: {missing}")
 
     return employees_df
 
@@ -739,16 +603,10 @@ def export_employees_csv(
     Generates enterprise workforce CSV.
     """
 
-    employees_df = (
-        generate_initial_employees(
-            total_employees=(
-                total_employees
-            ),
-            transport_users=(
-                transport_users
-            ),
-            seed=seed,
-        )
+    employees_df = generate_initial_employees(
+        total_employees=(total_employees),
+        transport_users=(transport_users),
+        seed=seed,
     )
 
     employees_df.to_csv(
@@ -756,61 +614,29 @@ def export_employees_csv(
         index=False,
     )
 
-    print(
-        "\n================================================="
-    )
+    print("\n=================================================")
 
-    print(
-        "ENTERPRISE EMPLOYEE GENERATION COMPLETE"
-    )
+    print("ENTERPRISE EMPLOYEE GENERATION COMPLETE")
 
-    print(
-        "=================================================\n"
-    )
+    print("=================================================\n")
 
-    print(
-        f"Total employees: "
-        f"{len(employees_df)}"
-    )
+    print(f"Total employees: {len(employees_df)}")
 
-    print(
-        f"Transport users: "
-        f"{employees_df['uses_company_transport'].sum()}"
-    )
+    print(f"Transport users: {employees_df['uses_company_transport'].sum()}")
 
-    print(
-        "\nTransport shift distribution:"
-    )
+    print("\nTransport shift distribution:")
 
-    print(
-        employees_df[
-            "transport_shift"
-        ].value_counts()
-    )
+    print(employees_df["transport_shift"].value_counts())
 
-    print(
-        "\nTransport eligibility:"
-    )
+    print("\nTransport eligibility:")
 
-    print(
-        employees_df[
-            "transport_eligibility"
-        ].value_counts()
-    )
+    print(employees_df["transport_eligibility"].value_counts())
 
-    print(
-        "\nExtension categories:"
-    )
+    print("\nExtension categories:")
 
-    print(
-        employees_df[
-            "extension_category"
-        ].value_counts()
-    )
+    print(employees_df["extension_category"].value_counts())
 
-    print(
-        "\n=================================================\n"
-    )
+    print("\n=================================================\n")
 
     return employees_df
 
@@ -820,7 +646,6 @@ def export_employees_csv(
 # =========================================================
 
 if __name__ == "__main__":
-
     export_employees_csv(
         output_path="data/employees.csv",
         total_employees=2000,

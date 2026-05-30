@@ -39,11 +39,7 @@ import pandas as pd
 # 📁 PATH CONFIGURATION
 # =========================================================
 
-BASE_DIR = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
-)
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 DATA_DIR = BASE_DIR / "synthetic_data"
 
@@ -58,11 +54,7 @@ DATA_DIR.mkdir(
 
 logging.basicConfig(
     level=logging.INFO,
-    format=(
-        "%(asctime)s | "
-        "%(levelname)s | "
-        "%(message)s"
-    ),
+    format=("%(asctime)s | %(levelname)s | %(message)s"),
 )
 
 logger = logging.getLogger(__name__)
@@ -80,46 +72,33 @@ FEMALE_EXTENSION_THRESHOLD = 0.35
 # 📥 LOAD DATASETS
 # =========================================================
 
+
 def load_datasets():
 
-    logger.info(
-        "Loading dispatch datasets..."
-    )
+    logger.info("Loading dispatch datasets...")
 
-    prediction_df = pd.read_csv(
-        DATA_DIR
-        / "employee_extension_predictions.csv"
-    )
+    prediction_df = pd.read_csv(DATA_DIR / "employee_extension_predictions.csv")
 
-    employee_df = pd.read_csv(
-        DATA_DIR
-        / "employee_extension_test.csv"
-    )
+    employee_df = pd.read_csv(DATA_DIR / "employee_extension_test.csv")
 
-    logger.info(
-        f"Prediction rows: "
-        f"{len(prediction_df)}"
-    )
+    logger.info(f"Prediction rows: {len(prediction_df)}")
 
-    logger.info(
-        f"Employee rows: "
-        f"{len(employee_df)}"
-    )
+    logger.info(f"Employee rows: {len(employee_df)}")
 
     return (
         prediction_df,
         employee_df,
     )
 
+
 # =========================================================
 # 🔗 MERGE PREDICTIONS
 # =========================================================
 
-def merge_predictions(
 
+def merge_predictions(
     prediction_df: pd.DataFrame,
     employee_df: pd.DataFrame,
-
 ) -> pd.DataFrame:
     """
     Merges prediction outputs with
@@ -129,10 +108,7 @@ def merge_predictions(
     for missing predictions.
     """
 
-    logger.info(
-        "Merging predictions with "
-        "employee operational data..."
-    )
+    logger.info("Merging predictions with employee operational data...")
 
     merged_df = employee_df.copy()
 
@@ -140,78 +116,42 @@ def merge_predictions(
     # Merge prediction columns
     # -----------------------------------------------------
 
-    merged_df[
-        "prediction_probability"
-    ] = prediction_df[
-        "prediction_probability"
-    ]
+    merged_df["prediction_probability"] = prediction_df["prediction_probability"]
 
-    merged_df[
-        "predicted_extension"
-    ] = prediction_df[
-        "predicted_extension"
-    ]
+    merged_df["predicted_extension"] = prediction_df["predicted_extension"]
 
     # -----------------------------------------------------
     # Defensive fallback handling
     # -----------------------------------------------------
 
-    logger.info(
-        "Applying defensive prediction "
-        "fallback handling..."
-    )
+    logger.info("Applying defensive prediction fallback handling...")
 
     # Track missing predictions
-    merged_df[
-        "prediction_missing_flag"
-    ] = (
-        merged_df[
-            "prediction_probability"
-        ].isna()
-    )
+    merged_df["prediction_missing_flag"] = merged_df["prediction_probability"].isna()
 
-    missing_count = int(
-        merged_df[
-            "prediction_missing_flag"
-        ].sum()
-    )
+    missing_count = int(merged_df["prediction_missing_flag"].sum())
 
-    logger.info(
-        f"Missing predictions detected: "
-        f"{missing_count}"
-    )
+    logger.info(f"Missing predictions detected: {missing_count}")
 
     # Safe operational fallback
     # Default employees to 03:30 wave
-    merged_df[
-        "prediction_probability"
-    ] = (
-        merged_df[
-            "prediction_probability"
-        ]
-        .fillna(0.0)
+    merged_df["prediction_probability"] = merged_df["prediction_probability"].fillna(
+        0.0
     )
 
-    merged_df[
-        "predicted_extension"
-    ] = (
-        merged_df[
-            "predicted_extension"
-        ]
-        .fillna(0)
-        .astype(int)
+    merged_df["predicted_extension"] = (
+        merged_df["predicted_extension"].fillna(0).astype(int)
     )
 
-    logger.info(
-        f"Merged rows: "
-        f"{len(merged_df)}"
-    )
+    logger.info(f"Merged rows: {len(merged_df)}")
 
     return merged_df
+
 
 # =========================================================
 # 🌊 BUILD DISPATCH WAVES
 # =========================================================
+
 
 def build_dispatch_waves(
     merged_df: pd.DataFrame,
@@ -225,146 +165,80 @@ def build_dispatch_waves(
     ✅ Dynamic thresholding
     """
 
-    logger.info(
-        "Building enterprise dispatch waves..."
-    )
+    logger.info("Building enterprise dispatch waves...")
 
     # -----------------------------------------------------
     # DAILY OPERATIONAL DISPATCH FILTER
     # -----------------------------------------------------
 
-    latest_date = (
-        merged_df["date"].max()
-    )
+    latest_date = merged_df["date"].max()
 
-    merged_df = merged_df[
-        merged_df["date"] == latest_date
-    ].copy()
+    merged_df = merged_df[merged_df["date"] == latest_date].copy()
 
-    logger.info(
-        f"Building dispatch for date: "
-        f"{latest_date}"
-    )
+    logger.info(f"Building dispatch for date: {latest_date}")
 
-    logger.info(
-        f"Daily workforce size: "
-        f"{len(merged_df)}"
-    )
+    logger.info(f"Daily workforce size: {len(merged_df)}")
 
     # -----------------------------------------------------
     # Female Safety Conservative Logic
     # -----------------------------------------------------
 
-    female_extension_mask = (
-
-        (
-            merged_df["gender"]
-            == "Female"
-        )
-
-        &
-
-        (
-            merged_df[
-                "prediction_probability"
-            ]
-            >= FEMALE_EXTENSION_THRESHOLD
-        )
+    female_extension_mask = (merged_df["gender"] == "Female") & (
+        merged_df["prediction_probability"] >= FEMALE_EXTENSION_THRESHOLD
     )
 
     # -----------------------------------------------------
     # Standard Threshold Logic
     # -----------------------------------------------------
 
-    non_female_extension_mask = (
-
-        (
-            merged_df["gender"]
-            != "Female"
-        )
-
-        &
-
-        (
-            merged_df[
-                "prediction_probability"
-            ]
-            >= DEFAULT_EXTENSION_THRESHOLD
-        )
+    non_female_extension_mask = (merged_df["gender"] != "Female") & (
+        merged_df["prediction_probability"] >= DEFAULT_EXTENSION_THRESHOLD
     )
 
     # -----------------------------------------------------
     # Combined Extension Pool
     # -----------------------------------------------------
 
-    extension_mask = (
-
-        female_extension_mask
-
-        |
-
-        non_female_extension_mask
-    )
+    extension_mask = female_extension_mask | non_female_extension_mask
 
     # -----------------------------------------------------
     # 04:30 Overtime Dispatch Wave
     # -----------------------------------------------------
 
-    wave_0430 = merged_df[
-        extension_mask
-    ].copy()
+    wave_0430 = merged_df[extension_mask].copy()
 
-    wave_0430[
-        "dispatch_wave"
-    ] = "04:30"
+    wave_0430["dispatch_wave"] = "04:30"
 
     # -----------------------------------------------------
     # 03:30 Standard Dispatch Wave
     # -----------------------------------------------------
 
-    wave_0330 = merged_df.drop(
-        wave_0430.index
-    ).copy()
+    wave_0330 = merged_df.drop(wave_0430.index).copy()
 
-    wave_0330[
-        "dispatch_wave"
-    ] = "03:30"
+    wave_0330["dispatch_wave"] = "03:30"
 
     # -----------------------------------------------------
     # Safety Analytics
     # -----------------------------------------------------
 
-    female_0430_count = int(
-        (
-            wave_0430["gender"]
-            == "Female"
-        ).sum()
-    )
+    female_0430_count = int((wave_0430["gender"] == "Female").sum())
 
-    logger.info(
-        f"Female employees routed "
-        f"to 04:30 wave: "
-        f"{female_0430_count}"
-    )
+    logger.info(f"Female employees routed to 04:30 wave: {female_0430_count}")
 
-    logger.info(
-        f"03:30 wave employees: "
-        f"{len(wave_0330)}"
-    )
+    logger.info(f"03:30 wave employees: {len(wave_0330)}")
 
-    logger.info(
-        f"04:30 wave employees: "
-        f"{len(wave_0430)}"
-    )
+    logger.info(f"04:30 wave employees: {len(wave_0430)}")
 
     return (
         wave_0330,
         wave_0430,
     )
 
+
 # =========================================================
 # 📊 OPERATIONAL SUMMARY
 # =========================================================
+
 
 def generate_operational_summary(
     wave_0330: pd.DataFrame,
@@ -374,100 +248,53 @@ def generate_operational_summary(
     Generates enterprise dispatch KPIs.
     """
 
-    logger.info(
-        "Generating operational summary..."
-    )
+    logger.info("Generating operational summary...")
 
     summary = {
-
         # -------------------------------------------------
         # Workforce Volumes
         # -------------------------------------------------
-
-        "wave_0330_employee_count":
-            int(len(wave_0330)),
-
-        "wave_0430_employee_count":
-            int(len(wave_0430)),
-
+        "wave_0330_employee_count": int(len(wave_0330)),
+        "wave_0430_employee_count": int(len(wave_0430)),
         # -------------------------------------------------
         # Female Workforce Ratios
         # -------------------------------------------------
-
-        "wave_0330_female_ratio":
-            round(
-                (
-                    wave_0330["gender"]
-                    == "Female"
-                ).mean(),
-                4,
-            ),
-
-        "wave_0430_female_ratio":
-            round(
-                (
-                    wave_0430["gender"]
-                    == "Female"
-                ).mean(),
-                4,
-            ),
-
+        "wave_0330_female_ratio": round(
+            (wave_0330["gender"] == "Female").mean(),
+            4,
+        ),
+        "wave_0430_female_ratio": round(
+            (wave_0430["gender"] == "Female").mean(),
+            4,
+        ),
         # -------------------------------------------------
         # Escort Requirements
         # -------------------------------------------------
-
-        "wave_0330_escort_required":
-            int(
-                wave_0330[
-                    "requires_security_escort"
-                ].sum()
-            ),
-
-        "wave_0430_escort_required":
-            int(
-                wave_0430[
-                    "requires_security_escort"
-                ].sum()
-            ),
-
+        "wave_0330_escort_required": int(wave_0330["requires_security_escort"].sum()),
+        "wave_0430_escort_required": int(wave_0430["requires_security_escort"].sum()),
         # -------------------------------------------------
         # Missing Prediction Monitoring
         # -------------------------------------------------
-
-        "wave_0330_missing_predictions":
-            int(
-                wave_0330[
-                    "prediction_missing_flag"
-                ].sum()
-            ),
-
-        "wave_0430_missing_predictions":
-            int(
-                wave_0430[
-                    "prediction_missing_flag"
-                ].sum()
-            ),
-
+        "wave_0330_missing_predictions": int(
+            wave_0330["prediction_missing_flag"].sum()
+        ),
+        "wave_0430_missing_predictions": int(
+            wave_0430["prediction_missing_flag"].sum()
+        ),
         # -------------------------------------------------
         # Operational Fleet Planning
         # -------------------------------------------------
-
-        "estimated_cabs_wave_0330":
-            int(
-                len(wave_0330) / 4
-            ) + 1,
-
-        "estimated_cabs_wave_0430":
-            int(
-                len(wave_0430) / 4
-            ) + 1,
+        "estimated_cabs_wave_0330": int(len(wave_0330) / 4) + 1,
+        "estimated_cabs_wave_0430": int(len(wave_0430) / 4) + 1,
     }
 
     return summary
 
+
 # =========================================================
 # 📈 VISUALIZATION
 # =========================================================
+
 
 def export_visualizations(
     wave_0330: pd.DataFrame,
@@ -477,9 +304,7 @@ def export_visualizations(
     Exports workforce wave visualization.
     """
 
-    logger.info(
-        "Exporting wave visualization..."
-    )
+    logger.info("Exporting wave visualization...")
 
     labels = [
         "03:30 Wave",
@@ -491,35 +316,28 @@ def export_visualizations(
         len(wave_0430),
     ]
 
-    plt.figure(
-        figsize=(8, 6)
-    )
+    plt.figure(figsize=(8, 6))
 
     plt.bar(
         labels,
         values,
     )
 
-    plt.ylabel(
-        "Employee Count"
-    )
+    plt.ylabel("Employee Count")
 
-    plt.title(
-        "Enterprise Dispatch Wave Distribution"
-    )
+    plt.title("Enterprise Dispatch Wave Distribution")
 
     plt.tight_layout()
 
-    plt.savefig(
-        DATA_DIR
-        / "wave_distribution.png"
-    )
+    plt.savefig(DATA_DIR / "wave_distribution.png")
 
     plt.close()
+
 
 # =========================================================
 # 📤 EXPORT OUTPUTS
 # =========================================================
+
 
 def export_outputs(
     wave_0330: pd.DataFrame,
@@ -530,23 +348,19 @@ def export_outputs(
     Exports dispatch orchestration outputs.
     """
 
-    logger.info(
-        "Exporting dispatch outputs..."
-    )
+    logger.info("Exporting dispatch outputs...")
 
     # -----------------------------------------------------
     # Export Wave Files
     # -----------------------------------------------------
 
     wave_0330.to_csv(
-        DATA_DIR
-        / "wave_0330.csv",
+        DATA_DIR / "wave_0330.csv",
         index=False,
     )
 
     wave_0430.to_csv(
-        DATA_DIR
-        / "wave_0430.csv",
+        DATA_DIR / "wave_0430.csv",
         index=False,
     )
 
@@ -555,34 +369,29 @@ def export_outputs(
     # -----------------------------------------------------
 
     with open(
-        DATA_DIR
-        / "dispatch_summary.json",
+        DATA_DIR / "dispatch_summary.json",
         "w",
         encoding="utf-8",
     ) as f:
-
         json.dump(
             summary,
             f,
             indent=4,
         )
 
-    logger.info(
-        "Dispatch outputs exported."
-    )
+    logger.info("Dispatch outputs exported.")
+
 
 # =========================================================
 # 🚀 MAIN PIPELINE
 # =========================================================
 
+
 def main():
 
     logger.info("=" * 60)
 
-    logger.info(
-        "Starting enterprise dispatch "
-        "wave builder..."
-    )
+    logger.info("Starting enterprise dispatch wave builder...")
 
     # -----------------------------------------------------
     # Load datasets
@@ -609,19 +418,15 @@ def main():
     (
         wave_0330,
         wave_0430,
-    ) = build_dispatch_waves(
-        merged_df
-    )
+    ) = build_dispatch_waves(merged_df)
 
     # -----------------------------------------------------
     # Generate operational summary
     # -----------------------------------------------------
 
-    summary = (
-        generate_operational_summary(
-            wave_0330,
-            wave_0430,
-        )
+    summary = generate_operational_summary(
+        wave_0330,
+        wave_0430,
     )
 
     # -----------------------------------------------------
@@ -643,20 +448,14 @@ def main():
         summary,
     )
 
-    logger.info(
-        "Enterprise dispatch wave "
-        "builder completed."
-    )
+    logger.info("Enterprise dispatch wave builder completed.")
 
-    print(
-        "\n🚀 Enterprise dispatch wave "
-        "generation completed successfully.\n"
-    )
+    print("\n🚀 Enterprise dispatch wave generation completed successfully.\n")
+
 
 # =========================================================
 # 🚀 ENTRYPOINT
 # =========================================================
 
 if __name__ == "__main__":
-
     main()

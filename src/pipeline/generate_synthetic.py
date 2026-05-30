@@ -60,24 +60,16 @@ from src.pipeline.verify import (
 # PATH CONFIGURATION
 # =========================================================
 
-BASE_DIR = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
-)
+BASE_DIR = Path(__file__).resolve().parents[2]
 
-DATA_DIR = (
-    BASE_DIR / "data"
-)
+DATA_DIR = BASE_DIR / "data"
 
 DATA_DIR.mkdir(
     parents=True,
     exist_ok=True,
 )
 
-LOG_FILE = (
-    DATA_DIR / "pipeline.log"
-)
+LOG_FILE = DATA_DIR / "pipeline.log"
 
 # =========================================================
 # ENTERPRISE LOGGING
@@ -85,22 +77,14 @@ LOG_FILE = (
 
 logging.basicConfig(
     level=logging.INFO,
-    format=(
-        "%(asctime)s | "
-        "%(levelname)s | "
-        "%(message)s"
-    ),
+    format=("%(asctime)s | %(levelname)s | %(message)s"),
     handlers=[
-
         logging.FileHandler(
             LOG_FILE,
             mode="w",
             encoding="utf-8",
         ),
-
-        logging.StreamHandler(
-            sys.stdout
-        ),
+        logging.StreamHandler(sys.stdout),
     ],
 )
 
@@ -120,14 +104,11 @@ SEED = 42
 def timed_stage(stage_name: str):
 
     class _Timer:
-
         def __enter__(self):
 
             self.start = time.time()
 
-            logger.info(
-                f"STARTED: {stage_name}"
-            )
+            logger.info(f"STARTED: {stage_name}")
 
             return self
 
@@ -138,17 +119,12 @@ def timed_stage(stage_name: str):
             exc_tb,
         ):
 
-            duration = (
-                time.time()
-                - self.start
-            )
+            duration = time.time() - self.start
 
-            logger.info(
-                f"COMPLETED: {stage_name} "
-                f"({duration:.2f}s)"
-            )
+            logger.info(f"COMPLETED: {stage_name} ({duration:.2f}s)")
 
     return _Timer()
+
 
 # =========================================================
 # DATAFRAME VALIDATION
@@ -164,21 +140,11 @@ def validate_dataframe(
     """
 
     if df.empty:
+        raise ValueError(f"{name} dataframe is empty.")
 
-        raise ValueError(
-            f"{name} dataframe is empty."
-        )
+    if df.isnull().sum().sum() > 0:
+        logger.warning(f"{name} contains null values.")
 
-    if (
-        df.isnull()
-        .sum()
-        .sum()
-        > 0
-    ):
-
-        logger.warning(
-            f"{name} contains null values."
-        )
 
 # =========================================================
 # EXPORT ENGINE
@@ -202,9 +168,7 @@ def export_dataframe(
     # CSV EXPORT
     # =====================================================
 
-    csv_path = (
-        DATA_DIR / filename
-    )
+    csv_path = DATA_DIR / filename
 
     df.to_csv(
         csv_path,
@@ -212,37 +176,27 @@ def export_dataframe(
         encoding="utf-8",
     )
 
-    logger.info(
-        f"Exported CSV: {filename}"
-    )
+    logger.info(f"Exported CSV: {filename}")
 
     # =====================================================
     # PARQUET EXPORT
     # =====================================================
 
     if export_parquet:
-
-        parquet_name = (
-            filename.replace(
-                ".csv",
-                ".parquet",
-            )
+        parquet_name = filename.replace(
+            ".csv",
+            ".parquet",
         )
 
-        parquet_path = (
-            DATA_DIR
-            / parquet_name
-        )
+        parquet_path = DATA_DIR / parquet_name
 
         df.to_parquet(
             parquet_path,
             index=False,
         )
 
-        logger.info(
-            f"Exported Parquet: "
-            f"{parquet_name}"
-        )
+        logger.info(f"Exported Parquet: {parquet_name}")
+
 
 # =========================================================
 # PIPELINE METADATA
@@ -260,49 +214,16 @@ def generate_metadata(
     """
 
     return {
-
-        "generated_at":
-            datetime.now(UTC)
-            .isoformat(),
-
-        "seed":
-            SEED,
-
-        "employee_count":
-            int(
-                len(employees_df)
-            ),
-
-        "transport_users":
-            int(
-                employees_df[
-                    "uses_company_transport"
-                ].sum()
-            ),
-
-        "activity_log_rows":
-            int(
-                len(activity_df)
-            ),
-
-        "fleet_count":
-            int(
-                len(fleet_df)
-            ),
-
-        "vendor_count":
-            int(
-                len(pricing_df)
-            ),
-
-        "dispatch_waves":
-
-            activity_df[
-                "actual_dispatch_wave"
-            ]
-            .value_counts()
-            .to_dict(),
+        "generated_at": datetime.now(UTC).isoformat(),
+        "seed": SEED,
+        "employee_count": int(len(employees_df)),
+        "transport_users": int(employees_df["uses_company_transport"].sum()),
+        "activity_log_rows": int(len(activity_df)),
+        "fleet_count": int(len(fleet_df)),
+        "vendor_count": int(len(pricing_df)),
+        "dispatch_waves": activity_df["actual_dispatch_wave"].value_counts().to_dict(),
     }
+
 
 # =========================================================
 # MAIN ORCHESTRATOR
@@ -313,10 +234,7 @@ def main() -> None:
 
     logger.info("=" * 60)
 
-    logger.info(
-        "Initializing Enterprise "
-        "Mobility Simulation Pipeline"
-    )
+    logger.info("Initializing Enterprise Mobility Simulation Pipeline")
 
     random.seed(SEED)
 
@@ -325,21 +243,15 @@ def main() -> None:
     pipeline_start = time.time()
 
     try:
-
         # =================================================
         # EMPLOYEE GENERATION
         # =================================================
 
-        with timed_stage(
-            "Employee Generation"
-        ):
-
-            employees_df = (
-                generate_initial_employees(
-                    total_employees=2000,
-                    transport_users=1000,
-                    seed=SEED,
-                )
+        with timed_stage("Employee Generation"):
+            employees_df = generate_initial_employees(
+                total_employees=2000,
+                transport_users=1000,
+                seed=SEED,
             )
 
             validate_dataframe(
@@ -356,16 +268,11 @@ def main() -> None:
         # CHURN SIMULATION
         # =================================================
 
-        with timed_stage(
-            "Churn Simulation"
-        ):
-
-            employees_after_churn = (
-                simulate_employee_churn(
-                    employees_df=employees_df,
-                    monthly_churn_rate=0.08,
-                    seed=SEED,
-                )
+        with timed_stage("Churn Simulation"):
+            employees_after_churn = simulate_employee_churn(
+                employees_df=employees_df,
+                monthly_churn_rate=0.08,
+                seed=SEED,
             )
 
             validate_dataframe(
@@ -382,35 +289,16 @@ def main() -> None:
         # ACTIVITY STREAM GENERATION
         # =================================================
 
-        with timed_stage(
-            "Activity Stream Generation"
-        ):
-
+        with timed_stage("Activity Stream Generation"):
             generate_activity_logs(
-
-                employees_csv=str(
-                    DATA_DIR
-                    / "employees_after_churn.csv"
-                ),
-
-                output_csv=str(
-                    DATA_DIR
-                    / "activity_logs.csv"
-                ),
-
+                employees_csv=str(DATA_DIR / "employees_after_churn.csv"),
+                output_csv=str(DATA_DIR / "activity_logs.csv"),
                 start_date="2025-01-01",
-
                 days=365,
-
                 seed=SEED,
             )
 
-            activity_logs_df = (
-                pd.read_csv(
-                    DATA_DIR
-                    / "activity_logs.csv"
-                )
-            )
+            activity_logs_df = pd.read_csv(DATA_DIR / "activity_logs.csv")
 
             export_dataframe(
                 activity_logs_df,
@@ -427,13 +315,8 @@ def main() -> None:
         # FLEET REGISTRY
         # =================================================
 
-        with timed_stage(
-            "Fleet Registry Generation"
-        ):
-
-            fleet_df = (
-                fleet_registry_dataframe()
-            )
+        with timed_stage("Fleet Registry Generation"):
+            fleet_df = fleet_registry_dataframe()
 
             export_dataframe(
                 fleet_df,
@@ -444,13 +327,8 @@ def main() -> None:
         # VENDOR PRICING
         # =================================================
 
-        with timed_stage(
-            "Vendor Pricing Generation"
-        ):
-
-            pricing_df = (
-                vendor_registry_dataframe()
-            )
+        with timed_stage("Vendor Pricing Generation"):
+            pricing_df = vendor_registry_dataframe()
 
             export_dataframe(
                 pricing_df,
@@ -461,10 +339,7 @@ def main() -> None:
         # ENTERPRISE VERIFICATION
         # =================================================
 
-        with timed_stage(
-            "Enterprise Verification"
-        ):
-
+        with timed_stage("Enterprise Verification"):
             verify_employees()
 
             verify_activity_logs()
@@ -476,31 +351,19 @@ def main() -> None:
         # =================================================
 
         metadata = generate_metadata(
-
-            employees_df=
-                employees_after_churn,
-
-            activity_df=
-                activity_logs_df,
-
-            fleet_df=
-                fleet_df,
-
-            pricing_df=
-                pricing_df,
+            employees_df=employees_after_churn,
+            activity_df=activity_logs_df,
+            fleet_df=fleet_df,
+            pricing_df=pricing_df,
         )
 
-        metadata_path = (
-            DATA_DIR
-            / "pipeline_metadata.json"
-        )
+        metadata_path = DATA_DIR / "pipeline_metadata.json"
 
         with open(
             metadata_path,
             "w",
             encoding="utf-8",
         ) as f:
-
             json.dump(
                 metadata,
                 f,
@@ -523,38 +386,23 @@ def main() -> None:
         # PIPELINE SUCCESS
         # =================================================
 
-        duration = (
-            time.time()
-            - pipeline_start
-        )
+        duration = time.time() - pipeline_start
 
-        logger.info(
-            f"Pipeline completed successfully "
-            f"in {duration:.2f} seconds."
-        )
+        logger.info(f"Pipeline completed successfully in {duration:.2f} seconds.")
 
-        print(
-            "\nEnterprise workforce mobility "
-            "pipeline completed successfully.\n"
-        )
+        print("\nEnterprise workforce mobility pipeline completed successfully.\n")
 
     except Exception as exc:
+        logger.exception("Pipeline execution failed.")
 
-        logger.exception(
-            "Pipeline execution failed."
-        )
-
-        print(
-            "\nPipeline execution failed.\n"
-            f"Check logs: {LOG_FILE}\n"
-        )
+        print(f"\nPipeline execution failed.\nCheck logs: {LOG_FILE}\n")
 
         raise exc
+
 
 # =========================================================
 # ENTRYPOINT
 # =========================================================
 
 if __name__ == "__main__":
-
     main()

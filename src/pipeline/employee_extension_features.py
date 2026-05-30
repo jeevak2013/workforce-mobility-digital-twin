@@ -44,11 +44,7 @@ import pandas as pd
 # 📁 PROJECT PATH CONFIGURATION
 # =========================================================
 
-BASE_DIR = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
-)
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 DATA_DIR = BASE_DIR / "synthetic_data"
 
@@ -63,11 +59,7 @@ DATA_DIR.mkdir(
 
 logging.basicConfig(
     level=logging.INFO,
-    format=(
-        "%(asctime)s | "
-        "%(levelname)s | "
-        "%(message)s"
-    ),
+    format=("%(asctime)s | %(levelname)s | %(message)s"),
 )
 
 logger = logging.getLogger(__name__)
@@ -76,55 +68,30 @@ logger = logging.getLogger(__name__)
 # 📥 DATA LOADING
 # =========================================================
 
+
 def load_datasets():
 
-    logger.info(
-        "Loading datasets..."
-    )
+    logger.info("Loading datasets...")
 
-    logs_df = pd.read_csv(
-        DATA_DIR / "historical_roster_logs.csv"
-    )
+    logs_df = pd.read_csv(DATA_DIR / "historical_roster_logs.csv")
 
-    logs_df.columns = [
+    logs_df.columns = [col.strip().lower().replace(" ", "_") for col in logs_df.columns]
 
-        col.strip()
-        .lower()
-        .replace(" ", "_")
-
-        for col in logs_df.columns
-    ]    
-
-    employee_df = pd.read_csv(
-        DATA_DIR / "employees.csv"
-    )
+    employee_df = pd.read_csv(DATA_DIR / "employees.csv")
 
     # -----------------------------------------------------
     # Standardize column names
     # -----------------------------------------------------
 
     employee_df.columns = [
-
-        col.strip()
-        .lower()
-        .replace(" ", "_")
-
-        for col in employee_df.columns
+        col.strip().lower().replace(" ", "_") for col in employee_df.columns
     ]
 
-    logs_df["date"] = pd.to_datetime(
-        logs_df["date"]
-    )
+    logs_df["date"] = pd.to_datetime(logs_df["date"])
 
-    logger.info(
-        f"Activity logs rows: "
-        f"{len(logs_df)}"
-    )
+    logger.info(f"Activity logs rows: {len(logs_df)}")
 
-    logger.info(
-        f"Employee master rows: "
-        f"{len(employee_df)}"
-    )
+    logger.info(f"Employee master rows: {len(employee_df)}")
 
     return logs_df, employee_df
 
@@ -133,6 +100,7 @@ def load_datasets():
 # 🎯 TARGET ENGINEERING
 # =========================================================
 
+
 def create_target_variable(
     logs_df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -140,26 +108,17 @@ def create_target_variable(
     Creates employee-level extension target.
     """
 
-    logger.info(
-        "Generating extension target..."
-    )
+    logger.info("Generating extension target...")
 
     logs_df["extended"] = np.where(
-        logs_df["actual_logout"]
-        == "04:30:00",
+        logs_df["actual_logout"] == "04:30:00",
         1,
         0,
     )
 
-    extension_rate = (
-        logs_df["extended"]
-        .mean()
-    )
+    extension_rate = logs_df["extended"].mean()
 
-    logger.info(
-        f"Extension rate: "
-        f"{extension_rate:.2%}"
-    )
+    logger.info(f"Extension rate: {extension_rate:.2%}")
 
     return logs_df
 
@@ -168,6 +127,7 @@ def create_target_variable(
 # 📅 TEMPORAL FEATURES
 # =========================================================
 
+
 def build_temporal_features(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -175,43 +135,19 @@ def build_temporal_features(
     Creates calendar-based operational features.
     """
 
-    logger.info(
-        "Generating temporal features..."
-    )
+    logger.info("Generating temporal features...")
 
-    df["day_of_week"] = (
-        df["date"]
-        .dt.dayofweek
-    )
+    df["day_of_week"] = df["date"].dt.dayofweek
 
-    df["day_of_month"] = (
-        df["date"]
-        .dt.day
-    )
+    df["day_of_month"] = df["date"].dt.day
 
-    df["week_of_year"] = (
-        df["date"]
-        .dt.isocalendar()
-        .week
-        .astype(int)
-    )
+    df["week_of_year"] = df["date"].dt.isocalendar().week.astype(int)
 
-    df["month"] = (
-        df["date"]
-        .dt.month
-    )
+    df["month"] = df["date"].dt.month
 
-    df["is_month_end"] = (
-        df["date"]
-        .dt.is_month_end
-        .astype(int)
-    )
+    df["is_month_end"] = df["date"].dt.is_month_end.astype(int)
 
-    df["is_weekend"] = (
-        df["day_of_week"]
-        .isin([5, 6])
-        .astype(int)
-    )
+    df["is_weekend"] = df["day_of_week"].isin([5, 6]).astype(int)
 
     return df
 
@@ -220,6 +156,7 @@ def build_temporal_features(
 # 🔄 CYCLICAL ENCODING
 # =========================================================
 
+
 def build_cyclical_features(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -227,33 +164,15 @@ def build_cyclical_features(
     Generates cyclical time encodings.
     """
 
-    logger.info(
-        "Generating cyclical features..."
-    )
+    logger.info("Generating cyclical features...")
 
-    df["dow_sin"] = np.sin(
-        2 * np.pi
-        * df["day_of_week"]
-        / 7
-    )
+    df["dow_sin"] = np.sin(2 * np.pi * df["day_of_week"] / 7)
 
-    df["dow_cos"] = np.cos(
-        2 * np.pi
-        * df["day_of_week"]
-        / 7
-    )
+    df["dow_cos"] = np.cos(2 * np.pi * df["day_of_week"] / 7)
 
-    df["month_sin"] = np.sin(
-        2 * np.pi
-        * df["month"]
-        / 12
-    )
+    df["month_sin"] = np.sin(2 * np.pi * df["month"] / 12)
 
-    df["month_cos"] = np.cos(
-        2 * np.pi
-        * df["month"]
-        / 12
-    )
+    df["month_cos"] = np.cos(2 * np.pi * df["month"] / 12)
 
     return df
 
@@ -262,6 +181,7 @@ def build_cyclical_features(
 # 👤 EMPLOYEE BEHAVIOR FEATURES
 # =========================================================
 
+
 def build_employee_behavior_features(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -269,9 +189,7 @@ def build_employee_behavior_features(
     Generates employee historical behavior signals.
     """
 
-    logger.info(
-        "Generating employee behavior features..."
-    )
+    logger.info("Generating employee behavior features...")
 
     df = df.sort_values(
         by=[
@@ -284,15 +202,10 @@ def build_employee_behavior_features(
     # Historical extension persistence
     # -----------------------------------------------------
 
-    df["employee_last_3d_extension_rate"] = (
-
-        df.groupby("employee_id")[
-            "extended"
-        ]
-
-        .transform(
-
-            lambda x:
+    df["employee_last_3d_extension_rate"] = df.groupby("employee_id")[
+        "extended"
+    ].transform(
+        lambda x: (
             x.shift(1)
             .rolling(
                 window=3,
@@ -302,15 +215,10 @@ def build_employee_behavior_features(
         )
     )
 
-    df["employee_last_7d_extension_rate"] = (
-
-        df.groupby("employee_id")[
-            "extended"
-        ]
-
-        .transform(
-
-            lambda x:
+    df["employee_last_7d_extension_rate"] = df.groupby("employee_id")[
+        "extended"
+    ].transform(
+        lambda x: (
             x.shift(1)
             .rolling(
                 window=7,
@@ -320,15 +228,10 @@ def build_employee_behavior_features(
         )
     )
 
-    df["employee_last_7d_extension_count"] = (
-
-        df.groupby("employee_id")[
-            "extended"
-        ]
-
-        .transform(
-
-            lambda x:
+    df["employee_last_7d_extension_count"] = df.groupby("employee_id")[
+        "extended"
+    ].transform(
+        lambda x: (
             x.shift(1)
             .rolling(
                 window=7,
@@ -345,6 +248,7 @@ def build_employee_behavior_features(
 # 🏢 OPERATIONAL PRESSURE FEATURES
 # =========================================================
 
+
 def build_operational_features(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -352,34 +256,15 @@ def build_operational_features(
     Generates operational workload indicators.
     """
 
-    logger.info(
-        "Generating operational features..."
-    )
+    logger.info("Generating operational features...")
 
     # Daily overtime load
-    daily_extension_counts = (
+    daily_extension_counts = df.groupby("date")["extended"].sum().sort_index()
 
-        df.groupby("date")[
-            "extended"
-        ]
+    daily_extension_counts = daily_extension_counts.shift(1).fillna(0)
 
-        .sum()
-
-        .sort_index()
-    )
-
-    daily_extension_counts = (
-
-        daily_extension_counts
-        .shift(1)
-        .fillna(0)
-    )
-
-    daily_extension_counts = (
-        daily_extension_counts
-        .rename(
-            "previous_day_extension_load"
-        )
+    daily_extension_counts = daily_extension_counts.rename(
+        "previous_day_extension_load"
     )
 
     df = df.merge(
@@ -401,6 +286,7 @@ def build_operational_features(
 # 👥 EMPLOYEE MASTER ENRICHMENT
 # =========================================================
 
+
 def merge_employee_master(
     df: pd.DataFrame,
     employee_df: pd.DataFrame,
@@ -410,30 +296,21 @@ def merge_employee_master(
     without creating duplicate columns.
     """
 
-    logger.info(
-        "Merging employee master data..."
-    )
+    logger.info("Merging employee master data...")
 
     # -------------------------------------------------
     # Select ONLY enrichment fields
     # -------------------------------------------------
 
     employee_features = [
-
         "employee_id",
-
         "gender",
-
         "tenure_days",
-
         "safety_priority_score",
-
         "requires_security_escort",
     ]
 
-    employee_df = employee_df[
-        employee_features
-    ]
+    employee_df = employee_df[employee_features]
 
     # -------------------------------------------------
     # Merge enrichment data
@@ -447,9 +324,11 @@ def merge_employee_master(
 
     return df
 
+
 # =========================================================
 # 🧹 CLEANING / IMPUTATION
 # =========================================================
+
 
 def clean_dataset(
     df: pd.DataFrame,
@@ -458,37 +337,19 @@ def clean_dataset(
     Applies enterprise-safe imputations.
     """
 
-    logger.info(
-        "Cleaning feature matrix..."
-    )
+    logger.info("Cleaning feature matrix...")
 
-    numeric_columns = df.select_dtypes(
-        include=[np.number]
-    ).columns
+    numeric_columns = df.select_dtypes(include=[np.number]).columns
 
-    df[numeric_columns] = (
+    df[numeric_columns] = df[numeric_columns].fillna(0)
 
-        df[numeric_columns]
+    categorical_columns = df.select_dtypes(include=["object"]).columns
 
-        .fillna(0)
-    )
+    df[categorical_columns] = df[categorical_columns].fillna("Unknown")
 
-    categorical_columns = df.select_dtypes(
-        include=["object"]
-    ).columns
+    logger.info(f"Final rows: {len(df)}")
 
-    df[categorical_columns] = (
-        df[categorical_columns]
-        .fillna("Unknown")
-    )
-
-    logger.info(
-        f"Final rows: {len(df)}"
-    )
-
-    logger.info(
-        f"Final columns: {len(df.columns)}"
-    )
+    logger.info(f"Final columns: {len(df.columns)}")
 
     return df
 
@@ -496,6 +357,7 @@ def clean_dataset(
 # =========================================================
 # ✂ CHRONOLOGICAL SPLIT
 # =========================================================
+
 
 def split_train_test(
     df: pd.DataFrame,
@@ -505,42 +367,23 @@ def split_train_test(
     Chronological split preserving temporal order.
     """
 
-    logger.info(
-        "Performing chronological split..."
-    )
+    logger.info("Performing chronological split...")
 
-    unique_dates = sorted(
-        df["date"].unique()
-    )
+    unique_dates = sorted(df["date"].unique())
 
-    split_index = int(
-        len(unique_dates)
-        * train_ratio
-    )
+    split_index = int(len(unique_dates) * train_ratio)
 
-    train_dates = unique_dates[
-        :split_index
-    ]
+    train_dates = unique_dates[:split_index]
 
-    test_dates = unique_dates[
-        split_index:
-    ]
+    test_dates = unique_dates[split_index:]
 
-    train_df = df[
-        df["date"].isin(train_dates)
-    ].copy()
+    train_df = df[df["date"].isin(train_dates)].copy()
 
-    test_df = df[
-        df["date"].isin(test_dates)
-    ].copy()
+    test_df = df[df["date"].isin(test_dates)].copy()
 
-    logger.info(
-        f"Train rows: {len(train_df)}"
-    )
+    logger.info(f"Train rows: {len(train_df)}")
 
-    logger.info(
-        f"Test rows: {len(test_df)}"
-    )
+    logger.info(f"Test rows: {len(test_df)}")
 
     return train_df, test_df
 
@@ -548,6 +391,7 @@ def split_train_test(
 # =========================================================
 # 📤 EXPORT ENGINE
 # =========================================================
+
 
 def export_datasets(
     train_df: pd.DataFrame,
@@ -557,126 +401,87 @@ def export_datasets(
     Exports employee-level classification datasets.
     """
 
-    logger.info(
-        "Exporting employee extension datasets..."
-    )
+    logger.info("Exporting employee extension datasets...")
 
     train_df.to_csv(
-        DATA_DIR
-        / "employee_extension_train.csv",
+        DATA_DIR / "employee_extension_train.csv",
         index=False,
     )
 
     test_df.to_csv(
-        DATA_DIR
-        / "employee_extension_test.csv",
+        DATA_DIR / "employee_extension_test.csv",
         index=False,
     )
 
     metadata = {
-
-        "problem_type":
-            "binary_classification",
-
-        "target_column":
-            "extended",
-
-        "train_rows":
-            int(len(train_df)),
-
-        "test_rows":
-            int(len(test_df)),
-
-        "feature_count":
-            int(len(train_df.columns)),
-
-        "objective":
-            (
-                "Predict which employees "
-                "will extend overtime"
-            ),
+        "problem_type": "binary_classification",
+        "target_column": "extended",
+        "train_rows": int(len(train_df)),
+        "test_rows": int(len(test_df)),
+        "feature_count": int(len(train_df.columns)),
+        "objective": ("Predict which employees will extend overtime"),
     }
 
     with open(
-        DATA_DIR
-        / "employee_extension_metadata.json",
+        DATA_DIR / "employee_extension_metadata.json",
         "w",
         encoding="utf-8",
     ) as f:
-
         json.dump(
             metadata,
             f,
             indent=4,
         )
 
-    logger.info(
-        "Employee extension datasets exported."
-    )
+    logger.info("Employee extension datasets exported.")
 
 
 # =========================================================
 # 🚀 MAIN PIPELINE
 # =========================================================
 
+
 def main() -> None:
 
     logger.info("=" * 60)
 
-    logger.info(
-        "Starting employee extension "
-        "feature engineering..."
-    )
+    logger.info("Starting employee extension feature engineering...")
 
     # -----------------------------------------------------
     # Load data
     # -----------------------------------------------------
 
-    logs_df, employee_df = (
-        load_datasets()
-    )
+    logs_df, employee_df = load_datasets()
 
     # -----------------------------------------------------
     # Target
     # -----------------------------------------------------
 
-    logs_df = create_target_variable(
-        logs_df
-    )
+    logs_df = create_target_variable(logs_df)
 
     # -----------------------------------------------------
     # Temporal
     # -----------------------------------------------------
 
-    logs_df = build_temporal_features(
-        logs_df
-    )
+    logs_df = build_temporal_features(logs_df)
 
     # -----------------------------------------------------
     # Cyclical
     # -----------------------------------------------------
 
-    logs_df = build_cyclical_features(
-        logs_df
-    )
+    logs_df = build_cyclical_features(logs_df)
 
     # -----------------------------------------------------
     # Employee behavior
     # -----------------------------------------------------
 
-    logs_df = (
-        build_employee_behavior_features(
-            logs_df
-        )
-    )
+    logs_df = build_employee_behavior_features(logs_df)
 
     # -----------------------------------------------------
     # Operational
     # -----------------------------------------------------
 
-    logs_df = build_operational_features(
-        logs_df
-    )
+    logs_df = build_operational_features(logs_df)
 
     # -----------------------------------------------------
     # Employee enrichment
@@ -691,17 +496,13 @@ def main() -> None:
     # Cleaning
     # -----------------------------------------------------
 
-    logs_df = clean_dataset(
-        logs_df
-    )
+    logs_df = clean_dataset(logs_df)
 
     # -----------------------------------------------------
     # Split
     # -----------------------------------------------------
 
-    train_df, test_df = split_train_test(
-        logs_df
-    )
+    train_df, test_df = split_train_test(logs_df)
 
     # -----------------------------------------------------
     # Export
@@ -712,15 +513,9 @@ def main() -> None:
         test_df,
     )
 
-    logger.info(
-        "Employee extension feature "
-        "engineering completed."
-    )
+    logger.info("Employee extension feature engineering completed.")
 
-    print(
-        "\n🚀 Employee extension feature "
-        "datasets generated successfully.\n"
-    )
+    print("\n🚀 Employee extension feature datasets generated successfully.\n")
 
 
 # =========================================================
@@ -728,5 +523,4 @@ def main() -> None:
 # =========================================================
 
 if __name__ == "__main__":
-
     main()

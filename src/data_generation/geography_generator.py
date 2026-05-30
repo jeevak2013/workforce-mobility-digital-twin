@@ -53,23 +53,12 @@ def generate_geo_offset(
     latitude/longitude offset.
     """
 
-    delta_lat = (
-        distance_km
-        * math.cos(angle_radians)
-        / KM_PER_DEGREE_LATITUDE
-    )
+    delta_lat = distance_km * math.cos(angle_radians) / KM_PER_DEGREE_LATITUDE
 
     delta_lon = (
         distance_km
         * math.sin(angle_radians)
-        / (
-            KM_PER_DEGREE_LATITUDE
-            * math.cos(
-                math.radians(
-                    BPO.location.latitude
-                )
-            )
-        )
+        / (KM_PER_DEGREE_LATITUDE * math.cos(math.radians(BPO.location.latitude)))
     )
 
     return delta_lat, delta_lon
@@ -105,22 +94,14 @@ def generate_random_home_drop(
         2 * math.pi,
     )
 
-    delta_lat, delta_lon = (
-        generate_geo_offset(
-            distance,
-            angle,
-        )
+    delta_lat, delta_lon = generate_geo_offset(
+        distance,
+        angle,
     )
 
-    latitude = (
-        hub_center.latitude
-        + delta_lat
-    )
+    latitude = hub_center.latitude + delta_lat
 
-    longitude = (
-        hub_center.longitude
-        + delta_lon
-    )
+    longitude = hub_center.longitude + delta_lon
 
     return (
         round(latitude, 6),
@@ -147,15 +128,9 @@ def generate_long_distance_outlier(
     - dispatch realism
     """
 
-    hub_name = rng.choice(
-        list(
-            COIMBATORE_HUBS.keys()
-        )
-    )
+    hub_name = rng.choice(list(COIMBATORE_HUBS.keys()))
 
-    hub = COIMBATORE_HUBS[
-        hub_name
-    ]
+    hub = COIMBATORE_HUBS[hub_name]
 
     distance = rng.uniform(
         22,
@@ -167,22 +142,14 @@ def generate_long_distance_outlier(
         2 * math.pi,
     )
 
-    delta_lat, delta_lon = (
-        generate_geo_offset(
-            distance,
-            angle,
-        )
+    delta_lat, delta_lon = generate_geo_offset(
+        distance,
+        angle,
     )
 
-    latitude = (
-        hub.latitude
-        + delta_lat
-    )
+    latitude = hub.latitude + delta_lat
 
-    longitude = (
-        hub.longitude
-        + delta_lon
-    )
+    longitude = hub.longitude + delta_lon
 
     return (
         round(latitude, 6),
@@ -211,10 +178,7 @@ def within_operational_boundary(
         BPO.location.longitude,
     )
 
-    return (
-        distance
-        <= BPO.operational_radius_km
-    )
+    return distance <= BPO.operational_radius_km
 
 
 # =========================================================
@@ -255,48 +219,31 @@ def generate_employee_location(
     hub_name = cast(
         HubLiteral,
         rng.choices(
-            population=list(
-                hub_weights.keys()
-            ),
-            weights=list(
-                hub_weights.values()
-            ),
+            population=list(hub_weights.keys()),
+            weights=list(hub_weights.values()),
             k=1,
-        )[0]
+        )[0],
     )
 
-    hub = COIMBATORE_HUBS[
-        hub_name
-    ]
+    hub = COIMBATORE_HUBS[hub_name]
 
     # -----------------------------------------------------
     # Long-distance outlier logic
     # -----------------------------------------------------
 
-    if (
-        rng.random()
-        < outlier_probability
-    ):
-
-        latitude, longitude = (
-            generate_long_distance_outlier(
-                rng
-            )
-        )
+    if rng.random() < outlier_probability:
+        latitude, longitude = generate_long_distance_outlier(rng)
 
     else:
-
         max_scatter = rng.uniform(
             3,
             hub.operational_radius_km,
         )
 
-        latitude, longitude = (
-            generate_random_home_drop(
-                hub_center=hub,
-                max_scatter_km=max_scatter,
-                rng=rng,
-            )
+        latitude, longitude = generate_random_home_drop(
+            hub_center=hub,
+            max_scatter_km=max_scatter,
+            rng=rng,
         )
 
     return (
@@ -330,12 +277,7 @@ def generate_bulk_employee_locations(
     locations = []
 
     for _ in range(employee_count):
-
-        location = (
-            generate_employee_location(
-                rng
-            )
-        )
+        location = generate_employee_location(rng)
 
         locations.append(location)
 
@@ -352,9 +294,7 @@ def generate_density_cluster(
     cluster_size: int,
     cluster_radius_km: float,
     rng: random.Random,
-) -> List[
-    Tuple[float, float]
-]:
+) -> List[Tuple[float, float]]:
     """
     Generates dense employee clusters.
 
@@ -364,20 +304,15 @@ def generate_density_cluster(
     - demand hotspots
     """
 
-    hub = COIMBATORE_HUBS[
-        hub_name
-    ]
+    hub = COIMBATORE_HUBS[hub_name]
 
     cluster = []
 
     for _ in range(cluster_size):
-
-        latitude, longitude = (
-            generate_random_home_drop(
-                hub_center=hub,
-                max_scatter_km=cluster_radius_km,
-                rng=rng,
-            )
+        latitude, longitude = generate_random_home_drop(
+            hub_center=hub,
+            max_scatter_km=cluster_radius_km,
+            rng=rng,
         )
 
         cluster.append(
@@ -421,22 +356,14 @@ def generate_high_risk_zone_employee(
         2 * math.pi,
     )
 
-    delta_lat, delta_lon = (
-        generate_geo_offset(
-            distance,
-            angle,
-        )
+    delta_lat, delta_lon = generate_geo_offset(
+        distance,
+        angle,
     )
 
-    latitude = (
-        BPO.location.latitude
-        + delta_lat
-    )
+    latitude = BPO.location.latitude + delta_lat
 
-    longitude = (
-        BPO.location.longitude
-        + delta_lon
-    )
+    longitude = BPO.location.longitude + delta_lon
 
     return (
         round(latitude, 6),
@@ -450,9 +377,7 @@ def generate_high_risk_zone_employee(
 
 
 def average_distance_from_bpo(
-    coordinates: List[
-        Tuple[float, float]
-    ],
+    coordinates: List[Tuple[float, float]],
 ) -> float:
     """
     Computes workforce spread
@@ -465,7 +390,6 @@ def average_distance_from_bpo(
     distances = []
 
     for lat, lon in coordinates:
-
         distances.append(
             haversine_distance(
                 lat,
@@ -476,8 +400,7 @@ def average_distance_from_bpo(
         )
 
     return round(
-        sum(distances)
-        / len(distances),
+        sum(distances) / len(distances),
         2,
     )
 
@@ -519,14 +442,10 @@ def validate_generated_coordinate(
     Enterprise coordinate validator.
     """
 
-    if not (
-        10.5 <= latitude <= 11.5
-    ):
+    if not (10.5 <= latitude <= 11.5):
         return False
 
-    if not (
-        76.5 <= longitude <= 77.5
-    ):
+    if not (76.5 <= longitude <= 77.5):
         return False
 
     return True
@@ -537,28 +456,16 @@ def validate_generated_coordinate(
 # =========================================================
 
 if __name__ == "__main__":
-
     rng = random.Random(42)
 
-    print(
-        "\n================================================="
-    )
+    print("\n=================================================")
 
-    print(
-        "ENTERPRISE GEOGRAPHY GENERATOR"
-    )
+    print("ENTERPRISE GEOGRAPHY GENERATOR")
 
-    print(
-        "=================================================\n"
-    )
+    print("=================================================\n")
 
     for i in range(5):
-
-        lat, lon, hub = (
-            generate_employee_location(
-                rng
-            )
-        )
+        lat, lon, hub = generate_employee_location(rng)
 
         distance = haversine_distance(
             lat,
@@ -567,27 +474,14 @@ if __name__ == "__main__":
             BPO.location.longitude,
         )
 
-        print(
-            f"Employee {i + 1}"
-        )
+        print(f"Employee {i + 1}")
 
-        print(
-            f"Hub: {hub}"
-        )
+        print(f"Hub: {hub}")
 
-        print(
-            f"Coordinate: "
-            f"{lat}, {lon}"
-        )
+        print(f"Coordinate: {lat}, {lon}")
 
-        print(
-            f"Distance from BPO: "
-            f"{distance:.2f} km"
-        )
+        print(f"Distance from BPO: {distance:.2f} km")
 
-        print(
-            f"Valid: "
-            f"{validate_generated_coordinate(lat, lon)}"
-        )
+        print(f"Valid: {validate_generated_coordinate(lat, lon)}")
 
         print()
