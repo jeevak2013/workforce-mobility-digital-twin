@@ -772,6 +772,12 @@ def train_login_forecaster():
         / "workforce_login_model.pkl",
     )
 
+    joblib.dump(
+        feature_columns,
+        MODEL_DIR
+        / "workforce_login_features.pkl",
+    )
+
     prediction_df = pd.DataFrame({
 
         "actual":
@@ -923,6 +929,12 @@ def train_logout_forecaster():
         best_model,
         MODEL_DIR
         / "workforce_logout_model.pkl",
+    )
+
+    joblib.dump(
+        feature_columns,
+        MODEL_DIR
+        / "workforce_logout_features.pkl",
     )
 
     prediction_df = pd.DataFrame({
