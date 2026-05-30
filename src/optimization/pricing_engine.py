@@ -33,9 +33,9 @@ ShiftWaveType = Literal[
 ]
 
 VehicleType = Literal[
-    "SEDAN",
+    "TEMPO_TRAVELLER",
     "SUV",
-    "VAN",
+    "MAZDA",
 ]
 
 FuelType = Literal[
@@ -228,13 +228,31 @@ FLEET_REGISTRY: List[
 ] = [
 
     FleetVehicle(
-        vehicle_id="FT-SDN-001",
+        vehicle_id="FT-SUV",
 
         vendor_name="FastTrack Mobility",
 
-        vehicle_type="SEDAN",
+        vehicle_type="SUV",
 
-        seating_capacity=4,
+        seating_capacity=6,
+
+        fuel_type="CNG",
+
+        gps_enabled=True,
+
+        panic_button_enabled=True,
+
+        safety_rating=8.8,
+    ),
+
+    FleetVehicle(
+        vehicle_id="FT-TT",
+
+        vendor_name="FastTrack Mobility",
+
+        vehicle_type="TEMPO_TRAVELLER",
+
+        seating_capacity=14,
 
         fuel_type="DIESEL",
 
@@ -246,13 +264,49 @@ FLEET_REGISTRY: List[
     ),
 
     FleetVehicle(
-        vehicle_id="SR-SUV-101",
+        vehicle_id="FT-MAZ",
+
+        vendor_name="FastTrack Mobility",
+
+        vehicle_type="MAZDA",
+
+        seating_capacity=20,
+
+        fuel_type="DIESEL",
+
+        gps_enabled=True,
+
+        panic_button_enabled=True,
+
+        safety_rating=8.8,
+    ),
+
+    FleetVehicle(
+        vehicle_id="SR-SUV",
 
         vendor_name="SecureRide Logistics",
 
         vehicle_type="SUV",
 
         seating_capacity=6,
+
+        fuel_type="CNG",
+
+        gps_enabled=True,
+
+        panic_button_enabled=True,
+
+        safety_rating=9.5,
+    ),
+
+    FleetVehicle(
+        vehicle_id="SR-TT",
+
+        vendor_name="SecureRide Logistics",
+
+        vehicle_type="TEMPO_TRAVELLER",
+
+        seating_capacity=14,
 
         fuel_type="DIESEL",
 
@@ -264,15 +318,69 @@ FLEET_REGISTRY: List[
     ),
 
     FleetVehicle(
-        vehicle_id="CC-VAN-220",
+        vehicle_id="SR-MAZ",
+
+        vendor_name="SecureRide Logistics",
+
+        vehicle_type="MAZDA",
+
+        seating_capacity=20,
+
+        fuel_type="DIESEL",
+
+        gps_enabled=True,
+
+        panic_button_enabled=True,
+
+        safety_rating=9.5,
+    ),
+
+    FleetVehicle(
+        vehicle_id="CC-SUV",
 
         vendor_name="CityCommute Services",
 
-        vehicle_type="VAN",
+        vehicle_type="SUV",
 
-        seating_capacity=8,
+        seating_capacity=6,
 
         fuel_type="CNG",
+
+        gps_enabled=True,
+
+        panic_button_enabled=False,
+
+        safety_rating=8.1,
+    ),
+
+    FleetVehicle(
+        vehicle_id="CC-TT",
+
+        vendor_name="CityCommute Services",
+
+        vehicle_type="TEMPO_TRAVELLER",
+
+        seating_capacity=14,
+
+        fuel_type="DIESEL",
+
+        gps_enabled=True,
+
+        panic_button_enabled=False,
+
+        safety_rating=8.1,
+    ),
+
+    FleetVehicle(
+        vehicle_id="CC-MAZ",
+
+        vendor_name="CityCommute Services",
+
+        vehicle_type="MAZDA",
+
+        seating_capacity=20,
+
+        fuel_type="DIESEL",
 
         gps_enabled=True,
 
@@ -372,7 +480,7 @@ def compute_route_trip_cost(
     escort_required: bool = False,
     weekend_trip: bool = False,
     fuel_price_index: float = 1.0,
-    vehicle_capacity: int = 4,
+    vehicle_capacity: int = 20,
 ) -> RouteCostResult:
     """
     Enterprise route-level pricing engine.
@@ -646,64 +754,14 @@ def vendor_registry_dataframe(
 
 if __name__ == "__main__":
 
-    result = (
-        compute_route_trip_cost(
-            vendor_name="FastTrack Mobility",
-
-            route_distance_km=28.0,
-
-            dead_km=6.0,
-
-            employee_count=4,
-
-            shift_wave="03:30",
-
-            hub_name="Saravanampatti",
-
-            escort_required=True,
-
-            weekend_trip=False,
-
-            fuel_price_index=1.1,
-
-            vehicle_capacity=4,
-        )
+    fleet_registry_dataframe(   
+    ).to_csv(
+        "fleet_registry.csv",
+        index=False,
     )
 
-    print(
-        "\n================================================="
+    vendor_registry_dataframe(   
+    ).to_csv(
+        "vendor_registry.csv",
+        index=False,
     )
-
-    print(
-        "ENTERPRISE ROUTE COST SUMMARY"
-    )
-
-    print(
-        "=================================================\n"
-    )
-
-    print(result)
-
-    print(
-        "\n=================================================\n"
-    )
-
-    optimal = (
-        select_optimal_vendor(
-            route_distance_km=32,
-
-            shift_wave="04:30",
-
-            escort_required=False,
-
-            employee_count=5,
-
-            hub_name="Singanallur",
-        )
-    )
-
-    print(
-        "OPTIMAL VENDOR SELECTION"
-    )
-
-    print(optimal)
